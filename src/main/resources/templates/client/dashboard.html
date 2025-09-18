@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::sidebar}, ~{::content})}">
+<head>
+    <title>Мой кабинет</title>
+</head>
+<body>
+    <!-- Sidebar Menu -->
+    <ul class="nav flex-column" th:fragment="sidebar">
+        <li class="nav-item">
+            <a class="nav-link active" th:href="@{/client/dashboard}">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Мой кабинет
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/client/book}">
+                <i class="fas fa-plus-circle me-2"></i>
+                Забронировать место
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/client/bookings}">
+                <i class="fas fa-calendar-check me-2"></i>
+                Мои бронирования
+            </a>
+        </li>
+    </ul>
+
+    <!-- Main Content -->
+    <div th:fragment="content">
+        <!-- Welcome Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <i class="fas fa-user-circle me-2"></i>
+                            Добро пожаловать, <span th:text="${user.email}">user@example.com</span>!
+                        </h4>
+                        <p class="card-text text-muted">
+                            Управляйте своими бронированиями и создавайте новые через панель управления.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-check fa-3x mb-3 text-white-50"></i>
+                        <div class="stats-number" th:text="${totalBookings}">0</div>
+                        <div class="text-uppercase">Всего бронирований</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-3x mb-3 text-white-50"></i>
+                        <div class="stats-number" th:text="${#lists.size(upcomingBookings)}">0</div>
+                        <div class="text-uppercase">Предстоящие</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-history fa-3x mb-3 text-white-50"></i>
+                        <div class="stats-number" th:text="${#lists.size(recentBookings)}">0</div>
+                        <div class="text-uppercase">Недавние</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-bolt me-2"></i>
+                        Быстрые действия
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <a th:href="@{/client/book}" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Забронировать место
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <a th:href="@{/client/bookings}" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-list me-2"></i>
+                                    Все бронирования
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <a href="#" class="btn btn-outline-secondary w-100" disabled>
+                                    <i class="fas fa-user-cog me-2"></i>
+                                    Настройки профиля
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Bookings and Recent Bookings -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Предстоящие бронирования
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(upcomingBookings)}" class="text-muted text-center py-3">
+                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                            <p>У вас нет предстоящих бронирований</p>
+                            <a th:href="@{/client/book}" class="btn btn-primary">
+                                Забронировать место
+                            </a>
+                        </div>
+                        <div th:if="${!#lists.isEmpty(upcomingBookings)}">
+                            <div th:each="booking : ${upcomingBookings}" class="border-bottom pb-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1" th:text="${booking.seat.workspace.name}">Workspace Name</h6>
+                                        <p class="mb-1 text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            <span th:text="${#temporals.format(booking.slot.startAt, 'dd.MM.yyyy')}">01.01.2024</span>
+                                        </p>
+                                        <p class="mb-1 text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            <span th:text="${#temporals.format(booking.slot.startAt, 'HH:mm')} + ' - ' + ${#temporals.format(booking.slot.endAt, 'HH:mm')}">10:00 - 11:00</span>
+                                        </p>
+                                        <small class="text-muted" th:text="${booking.totalPrice} + ' ' + ${booking.currency}">1000 RUB</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge" 
+                                              th:classappend="${booking.status.name() == 'CONFIRMED'} ? 'bg-success' : 
+                                                             (${booking.status.name() == 'PENDING'} ? 'bg-warning' : 'bg-secondary')"
+                                              th:text="${booking.status.name()}">CONFIRMED</span>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <a th:href="@{/client/booking/{id}(id=${booking.id})}" class="btn btn-sm btn-outline-primary">
+                                        Подробнее
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <a th:href="@{/client/bookings}" class="btn btn-outline-primary">
+                                    Все предстоящие бронирования
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-history me-1"></i>
+                        Недавние бронирования
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(recentBookings)}" class="text-muted text-center py-3">
+                            <i class="fas fa-history fa-3x mb-3"></i>
+                            <p>У вас пока нет бронирований</p>
+                        </div>
+                        <div th:if="${!#lists.isEmpty(recentBookings)}">
+                            <div th:each="booking : ${recentBookings}" class="border-bottom pb-2 mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted" th:text="${booking.seat.workspace.name}">Workspace</small><br>
+                                        <strong th:text="${#temporals.format(booking.slot.startAt, 'dd.MM.yyyy HH:mm')}">01.01.2024 10:00</strong>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge" 
+                                              th:classappend="${booking.status.name() == 'CONFIRMED'} ? 'bg-success' : 
+                                                             (${booking.status.name() == 'PENDING'} ? 'bg-warning' : 
+                                                             (${booking.status.name() == 'CANCELLED'} ? 'bg-danger' : 'bg-secondary'))"
+                                              th:text="${booking.status.name()}">CONFIRMED</span><br>
+                                        <small class="text-muted" th:text="${booking.totalPrice} + ' ' + ${booking.currency}">1000 RUB</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a th:href="@{/client/bookings}" class="btn btn-outline-primary">
+                                    Все бронирования
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:fragment="scripts">
+        <!-- Client dashboard specific scripts -->
+    </th:block>
+</body>
+</html>

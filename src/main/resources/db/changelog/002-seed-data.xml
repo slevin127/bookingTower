@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="008-insert-admin-user" author="system">
+        <insert tableName="users">
+            <column name="email" value="admin@bookingtower.com"/>
+            <column name="password_hash" value="$2a$10$iLGMHCR65b0B8MWQ6BUg4uAkTZYoktnZMxoDBeJvBfhTdjwkhUJ2K"/>
+
+            <column name="role" value="ADMIN"/>
+            <column name="email_verified" valueBoolean="true"/>
+            <column name="created_at" valueDate="2024-01-01T10:00:00"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="009-insert-sample-coworking" author="system">
+        <insert tableName="coworkings">
+            <column name="name" value="TechHub Moscow"/>
+            <column name="address" value="ул. Тверская, 15, Москва, 125009"/>
+            <column name="timezone" value="Europe/Moscow"/>
+            <column name="open_from" value="09:00:00"/>
+            <column name="open_to" value="21:00:00"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="010-insert-sample-workspace" author="system">
+        <insert tableName="workspaces">
+            <column name="coworking_id" value="1"/>
+            <column name="name" value="Open Space"/>
+            <column name="description" value="Просторная открытая зона с современными рабочими местами"/>
+            <column name="seats_total" value="10"/>
+            <column name="amenities" value="Wi-Fi, Кофе, Принтер, Проектор"/>
+            <column name="price_per_hour" value="500.00"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspaces">
+            <column name="coworking_id" value="1"/>
+            <column name="name" value="Meeting Room"/>
+            <column name="description" value="Переговорная комната для встреч и презентаций"/>
+            <column name="seats_total" value="6"/>
+            <column name="amenities" value="Wi-Fi, Проектор, Доска, Кофе"/>
+            <column name="price_per_hour" value="1200.00"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="011-insert-sample-seats" author="system">
+        <!-- Open Space seats -->
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-01"/>
+            <column name="description" value="Рабочее место у окна"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-02"/>
+            <column name="description" value="Рабочее место в центре"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-03"/>
+            <column name="description" value="Рабочее место у стены"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-04"/>
+            <column name="description" value="Рабочее место у окна"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-05"/>
+            <column name="description" value="Рабочее место в центре"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-06"/>
+            <column name="description" value="Рабочее место у стены"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-07"/>
+            <column name="description" value="Рабочее место у окна"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-08"/>
+            <column name="description" value="Рабочее место в центре"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-09"/>
+            <column name="description" value="Рабочее место у стены"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="1"/>
+            <column name="code" value="OS-10"/>
+            <column name="description" value="Рабочее место у окна"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <!-- Meeting Room seats -->
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="2"/>
+            <column name="code" value="MR-01"/>
+            <column name="description" value="Место у доски"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="2"/>
+            <column name="code" value="MR-02"/>
+            <column name="description" value="Место у окна"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="2"/>
+            <column name="code" value="MR-03"/>
+            <column name="description" value="Место в центре"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="2"/>
+            <column name="code" value="MR-04"/>
+            <column name="description" value="Место у стены"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="2"/>
+            <column name="code" value="MR-05"/>
+            <column name="description" value="Место у окна"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="workspace_seats">
+            <column name="workspace_id" value="2"/>
+            <column name="code" value="MR-06"/>
+            <column name="description" value="Место в центре"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::sidebar}, ~{::content})}">
+<head>
+    <title>Доступ запрещен</title>
+</head>
+<body>
+    <!-- Empty sidebar for access denied page -->
+    <ul class="nav flex-column" th:fragment="sidebar">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/dashboard}">
+                <i class="fas fa-home me-2"></i>
+                На главную
+            </a>
+        </li>
+    </ul>
+
+    <!-- Main Content -->
+    <div th:fragment="content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="mb-4">
+                                <i class="fas fa-ban fa-5x text-danger"></i>
+                            </div>
+                            <h1 class="text-danger mb-3">403</h1>
+                            <h4 class="mb-3">Доступ запрещен</h4>
+                            <p class="text-muted mb-4">
+                                У вас нет прав для доступа к этой странице.
+                                Обратитесь к администратору, если считаете, что это ошибка.
+                            </p>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="/dashboard" class="btn btn-primary me-md-2">
+                                    <i class="fas fa-home me-2"></i>
+                                    Вернуться на главную
+                                </a>
+                                <a th:href="@{/perform-logout}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    Выйти
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

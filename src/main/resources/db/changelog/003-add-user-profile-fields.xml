@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="003-add-user-profile-fields" author="system">
+        <comment>Add user profile fields for individual and legal entity users</comment>
+        
+        <!-- Add user type field -->
+        <addColumn tableName="users">
+            <column name="user_type" type="VARCHAR(20)" defaultValue="INDIVIDUAL">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        
+        <!-- Add individual user fields -->
+        <addColumn tableName="users">
+            <column name="first_name" type="VARCHAR(100)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="last_name" type="VARCHAR(100)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="middle_name" type="VARCHAR(100)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="phone" type="VARCHAR(20)"/>
+        </addColumn>
+        
+        <!-- Add legal entity fields -->
+        <addColumn tableName="users">
+            <column name="company_name" type="VARCHAR(255)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="inn" type="VARCHAR(12)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="ogrn" type="VARCHAR(15)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="kpp" type="VARCHAR(9)"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="legal_address" type="TEXT"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="actual_address" type="TEXT"/>
+        </addColumn>
+        
+        <addColumn tableName="users">
+            <column name="director_name" type="VARCHAR(255)"/>
+        </addColumn>
+        
+        <!-- Create indexes for better performance -->
+        <createIndex tableName="users" indexName="idx_user_type">
+            <column name="user_type"/>
+        </createIndex>
+        
+        <createIndex tableName="users" indexName="idx_user_inn">
+            <column name="inn"/>
+        </createIndex>
+        
+        <createIndex tableName="users" indexName="idx_user_phone">
+            <column name="phone"/>
+        </createIndex>
+        
+        <!-- Update existing admin user to have proper user type -->
+        <update tableName="users">
+            <column name="user_type" value="INDIVIDUAL"/>
+            <where>email = 'admin@bookingtower.com'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

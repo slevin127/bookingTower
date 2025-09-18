@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-users-table" author="system">
+        <createTable tableName="users">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email_verified" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email_verification_token" type="VARCHAR(255)"/>
+            <column name="email_verification_expires_at" type="TIMESTAMP"/>
+            <column name="password_reset_token" type="VARCHAR(255)"/>
+            <column name="password_reset_expires_at" type="TIMESTAMP"/>
+        </createTable>
+        
+        <createIndex tableName="users" indexName="idx_user_email" unique="true">
+            <column name="email"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="002-create-coworkings-table" author="system">
+        <createTable tableName="coworkings">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timezone" type="VARCHAR(50)" defaultValue="Europe/Moscow">
+                <constraints nullable="false"/>
+            </column>
+            <column name="open_from" type="TIME" defaultValue="09:00:00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="open_to" type="TIME" defaultValue="21:00:00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="003-create-workspaces-table" author="system">
+        <createTable tableName="workspaces">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="coworking_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="seats_total" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amenities" type="TEXT"/>
+            <column name="price_per_hour" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addForeignKeyConstraint
+                baseTableName="workspaces"
+                baseColumnNames="coworking_id"
+                referencedTableName="coworkings"
+                referencedColumnNames="id"
+                constraintName="fk_workspace_coworking"/>
+                
+        <createIndex tableName="workspaces" indexName="idx_workspace_coworking">
+            <column name="coworking_id"/>
+        </createIndex>
+        
+        <createIndex tableName="workspaces" indexName="idx_workspace_active">
+            <column name="active"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="004-create-workspace-seats-table" author="system">
+        <createTable tableName="workspace_seats">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addForeignKeyConstraint
+                baseTableName="workspace_seats"
+                baseColumnNames="workspace_id"
+                referencedTableName="workspaces"
+                referencedColumnNames="id"
+                constraintName="fk_seat_workspace"/>
+                
+        <createIndex tableName="workspace_seats" indexName="idx_seat_workspace">
+            <column name="workspace_id"/>
+        </createIndex>
+        
+        <createIndex tableName="workspace_seats" indexName="idx_seat_code">
+            <column name="code"/>
+        </createIndex>
+        
+        <createIndex tableName="workspace_seats" indexName="idx_seat_active">
+            <column name="active"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="005-create-calendar-slots-table" author="system">
+        <createTable tableName="calendar_slots">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="seat_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="OPEN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hold_expires_at" type="TIMESTAMP"/>
+            <column name="hold_user_id" type="BIGINT"/>
+        </createTable>
+        
+        <addForeignKeyConstraint
+                baseTableName="calendar_slots"
+                baseColumnNames="seat_id"
+                referencedTableName="workspace_seats"
+                referencedColumnNames="id"
+                constraintName="fk_slot_seat"/>
+                
+        <createIndex tableName="calendar_slots" indexName="idx_slot_seat_time">
+            <column name="seat_id"/>
+            <column name="start_at"/>
+        </createIndex>
+        
+        <createIndex tableName="calendar_slots" indexName="idx_slot_status">
+            <column name="status"/>
+        </createIndex>
+        
+        <createIndex tableName="calendar_slots" indexName="idx_slot_hold_expires">
+            <column name="hold_expires_at"/>
+        </createIndex>
+        
+        <createIndex tableName="calendar_slots" indexName="idx_slot_start_at">
+            <column name="start_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="006-create-bookings-table" author="system">
+        <createTable tableName="bookings">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seat_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slot_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)" defaultValue="RUB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="confirmed_at" type="TIMESTAMP"/>
+            <column name="canceled_at" type="TIMESTAMP"/>
+            <column name="cancellation_reason" type="VARCHAR(500)"/>
+            <column name="no_show_marked_at" type="TIMESTAMP"/>
+        </createTable>
+        
+        <addForeignKeyConstraint
+                baseTableName="bookings"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_booking_user"/>
+                
+        <addForeignKeyConstraint
+                baseTableName="bookings"
+                baseColumnNames="seat_id"
+                referencedTableName="workspace_seats"
+                referencedColumnNames="id"
+                constraintName="fk_booking_seat"/>
+                
+        <addForeignKeyConstraint
+                baseTableName="bookings"
+                baseColumnNames="slot_id"
+                referencedTableName="calendar_slots"
+                referencedColumnNames="id"
+                constraintName="fk_booking_slot"/>
+                
+        <createIndex tableName="bookings" indexName="idx_booking_user">
+            <column name="user_id"/>
+        </createIndex>
+        
+        <createIndex tableName="bookings" indexName="idx_booking_seat">
+            <column name="seat_id"/>
+        </createIndex>
+        
+        <createIndex tableName="bookings" indexName="idx_booking_slot">
+            <column name="slot_id"/>
+        </createIndex>
+        
+        <createIndex tableName="bookings" indexName="idx_booking_status">
+            <column name="status"/>
+        </createIndex>
+        
+        <createIndex tableName="bookings" indexName="idx_booking_created">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="007-create-payments-table" author="system">
+        <createTable tableName="payments">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="booking_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider" type="VARCHAR(20)" defaultValue="YOOKASSA">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="amount" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)" defaultValue="RUB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="NEW">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="captured_at" type="TIMESTAMP"/>
+            <column name="refund_amount" type="DECIMAL(10,2)" defaultValueNumeric="0.00"/>
+            <column name="payment_url" type="VARCHAR(1000)"/>
+            <column name="confirmation_token" type="VARCHAR(255)"/>
+            <column name="idempotency_key" type="VARCHAR(255)"/>
+            <column name="failure_reason" type="VARCHAR(500)"/>
+            <column name="metadata" type="TEXT"/>
+        </createTable>
+        
+        <addForeignKeyConstraint
+                baseTableName="payments"
+                baseColumnNames="booking_id"
+                referencedTableName="bookings"
+                referencedColumnNames="id"
+                constraintName="fk_payment_booking"/>
+                
+        <createIndex tableName="payments" indexName="idx_payment_booking">
+            <column name="booking_id"/>
+        </createIndex>
+        
+        <createIndex tableName="payments" indexName="idx_payment_external" unique="true">
+            <column name="external_id"/>
+        </createIndex>
+        
+        <createIndex tableName="payments" indexName="idx_payment_status">
+            <column name="status"/>
+        </createIndex>
+        
+        <createIndex tableName="payments" indexName="idx_payment_provider">
+            <column name="provider"/>
+        </createIndex>
+        
+        <createIndex tableName="payments" indexName="idx_payment_created">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

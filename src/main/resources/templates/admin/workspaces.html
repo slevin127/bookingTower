@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::sidebar}, ~{::content})}">
+<head>
+    <title>Управление рабочими местами - BookingTower</title>
+</head>
+<body>
+    <!-- Sidebar Menu -->
+    <ul class="nav flex-column" th:fragment="sidebar">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/admin/dashboard}">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Панель управления
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/admin/bookings}">
+                <i class="fas fa-calendar-check me-2"></i>
+                Бронирования
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/admin/users}">
+                <i class="fas fa-users me-2"></i>
+                Пользователи
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" th:href="@{/admin/workspaces}">
+                <i class="fas fa-building me-2"></i>
+                Рабочие места
+            </a>
+        </li>
+    </ul>
+
+    <!-- Main Content -->
+    <div th:fragment="content">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-building me-2"></i>Управление рабочими местами</h1>
+                <div>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addWorkspaceModal">
+                        <i class="fas fa-plus me-2"></i>Добавить рабочее место
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-building fa-2x mb-2 text-white-50"></i>
+                            <div class="stats-number" th:text="${totalWorkspaces}">0</div>
+                            <div class="text-uppercase small">Всего рабочих мест</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-check-circle fa-2x mb-2 text-white-50"></i>
+                            <div class="stats-number" th:text="${activeWorkspaces}">0</div>
+                            <div class="text-uppercase small">Активные</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chair fa-2x mb-2 text-white-50"></i>
+                            <div class="stats-number" th:text="${totalSeats}">0</div>
+                            <div class="text-uppercase small">Всего мест</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar-alt fa-2x mb-2 text-white-50"></i>
+                            <div class="stats-number" th:text="${totalSlots}">0</div>
+                            <div class="text-uppercase small">Доступных слотов</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="get" class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Коворкинг</label>
+                                    <select name="coworkingId" class="form-select">
+                                        <option value="">Все коворкинги</option>
+                                        <option th:each="coworking : ${coworkings}" 
+                                                th:value="${coworking.id}" 
+                                                th:text="${coworking.name}"
+                                                th:selected="${param.coworkingId != null and param.coworkingId[0] == coworking.id.toString()}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Статус</label>
+                                    <select name="active" class="form-select">
+                                        <option value="">Все</option>
+                                        <option value="true" th:selected="${param.active != null and param.active[0] == 'true'}">Активные</option>
+                                        <option value="false" th:selected="${param.active != null and param.active[0] == 'false'}">Неактивные</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Цена от</label>
+                                    <input type="number" name="priceFrom" class="form-control" 
+                                           placeholder="0" step="0.01"
+                                           th:value="${param.priceFrom != null ? param.priceFrom[0] : ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-outline-primary">
+                                            <i class="fas fa-search me-2"></i>Фильтр
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workspaces Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>Список рабочих мест
+                                <span class="badge bg-secondary ms-2" th:text="${#lists.size(workspaces)}">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Название</th>
+                                            <th>Коворкинг</th>
+                                            <th>Мест</th>
+                                            <th>Цена/час</th>
+                                            <th>Статус</th>
+                                            <th>Удобства</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="workspace : ${workspaces}">
+                                            <td th:text="${workspace.id}">1</td>
+                                            <td>
+                                                <div>
+                                                    <strong th:text="${workspace.name}">Open Space</strong>
+                                                    <br>
+                                                    <small class="text-muted" th:text="${workspace.description}" th:if="${workspace.description}">
+                                                        Описание рабочего места
+                                                    </small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong th:text="${workspace.coworking.name}">Коворкинг центр</strong>
+                                                    <br>
+                                                    <small class="text-muted" th:text="${workspace.coworking.address}">
+                                                        Адрес коворкинга
+                                                    </small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info" th:text="${workspace.seatsTotal}">10</span>
+                                            </td>
+                                            <td>
+                                                <strong th:text="${workspace.pricePerHour + ' руб.'}">500 руб.</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge" 
+                                                      th:classappend="${workspace.active} ? 'bg-success' : 'bg-danger'"
+                                                      th:text="${workspace.active} ? 'Активно' : 'Неактивно'">
+                                                    Активно
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div th:if="${workspace.amenities}">
+                                                    <small class="text-muted" th:text="${workspace.amenities}">Wi-Fi, Кофе</small>
+                                                </div>
+                                                <div th:unless="${workspace.amenities}">
+                                                    <small class="text-muted">Не указано</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                                            data-bs-toggle="modal" 
+                                                            th:data-bs-target="'#workspaceModal' + ${workspace.id}"
+                                                            title="Просмотр деталей">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                            data-bs-toggle="modal" 
+                                                            th:data-bs-target="'#generateSlotsModal' + ${workspace.id}"
+                                                            title="Генерировать слоты">
+                                                        <i class="fas fa-calendar-plus"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning"
+                                                            onclick="editWorkspace(this)"
+                                                            th:data-workspace-id="${workspace.id}"
+                                                            title="Редактировать">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" 
+                                                            class="btn btn-sm"
+                                                            th:classappend="${workspace.active} ? 'btn-outline-secondary' : 'btn-outline-success'"
+                                                            onclick="toggleWorkspaceStatus(this)"
+                                                            th:data-workspace-id="${workspace.id}"
+                                                            th:data-current-status="${workspace.active}"
+                                                            th:title="${workspace.active} ? 'Деактивировать' : 'Активировать'">
+                                                        <i th:class="${workspace.active} ? 'fas fa-pause' : 'fas fa-play'"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workspace Detail Modals -->
+        <div th:each="workspace : ${workspaces}" 
+             class="modal fade" 
+             th:id="'workspaceModal' + ${workspace.id}" 
+             tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-building me-2"></i>
+                            Детали рабочего места
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Основная информация</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>ID:</strong></td>
+                                        <td th:text="${workspace.id}">1</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Название:</strong></td>
+                                        <td th:text="${workspace.name}">Open Space</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Описание:</strong></td>
+                                        <td th:text="${workspace.description ?: 'Не указано'}">Описание</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Коворкинг:</strong></td>
+                                        <td th:text="${workspace.coworking.name}">Коворкинг</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Всего мест:</strong></td>
+                                        <td th:text="${workspace.seatsTotal}">10</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Цена за час:</strong></td>
+                                        <td th:text="${workspace.pricePerHour + ' руб.'}">500 руб.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Статус:</strong></td>
+                                        <td th:text="${workspace.active} ? 'Активно' : 'Неактивно'">Активно</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Удобства</h6>
+                                <div th:if="${workspace.amenities}">
+                                    <p th:text="${workspace.amenities}">Wi-Fi, Кофе, Принтер</p>
+                                </div>
+                                <div th:unless="${workspace.amenities}">
+                                    <p class="text-muted">Удобства не указаны</p>
+                                </div>
+                                
+                                <h6 class="mt-3">Места</h6>
+                                <div class="row">
+                                    <div th:each="seat : ${workspace.seats}" class="col-6 mb-2">
+                                        <div class="card card-sm">
+                                            <div class="card-body p-2">
+                                                <small>
+                                                    <strong th:text="${seat.code}">OS-01</strong>
+                                                    <br>
+                                                    <span class="text-muted" th:text="${seat.description}">У окна</span>
+                                                    <br>
+                                                    <span class="badge badge-sm" 
+                                                          th:classappend="${seat.active} ? 'bg-success' : 'bg-danger'"
+                                                          th:text="${seat.active} ? 'Активно' : 'Неактивно'">
+                                                        Активно
+                                                    </span>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Generate Slots Modals -->
+        <div th:each="workspace : ${workspaces}" 
+             class="modal fade" 
+             th:id="'generateSlotsModal' + ${workspace.id}" 
+             tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-plus me-2"></i>
+                            Генерировать слоты для <span th:text="${workspace.name}"></span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/admin/workspaces/{id}/generate-slots(id=${workspace.id})}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Дата начала</label>
+                                <input type="date" name="startDate" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Дата окончания</label>
+                                <input type="date" name="endDate" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Время начала</label>
+                                <input type="time" name="startTime" class="form-control" value="09:00">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Время окончания</label>
+                                <input type="time" name="endTime" class="form-control" value="21:00">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Длительность слота (минуты)</label>
+                                <select name="slotDuration" class="form-select">
+                                    <option value="30">30 минут</option>
+                                    <option value="60" selected>1 час</option>
+                                    <option value="120">2 часа</option>
+                                    <option value="240">4 часа</option>
+                                </select>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <small>
+                                    Слоты будут созданы для всех активных мест в рабочем пространстве.
+                                    Существующие слоты на указанные даты будут пропущены.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-plus me-2"></i>Генерировать
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Workspace Modal -->
+        <div class="modal fade" id="addWorkspaceModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-plus me-2"></i>
+                            Добавить рабочее место
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/admin/workspaces" method="post">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Название *</label>
+                                        <input type="text" name="name" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Коворкинг *</label>
+                                        <select name="coworkingId" class="form-select" required>
+                                            <option value="">Выберите коворкинг</option>
+                                            <option th:each="coworking : ${coworkings}" 
+                                                    th:value="${coworking.id}" 
+                                                    th:text="${coworking.name}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Количество мест *</label>
+                                        <input type="number" name="seatsTotal" class="form-control" min="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Цена за час (руб.) *</label>
+                                        <input type="number" name="pricePerHour" class="form-control" step="0.01" min="0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Статус</label>
+                                        <select name="active" class="form-select">
+                                            <option value="true" selected>Активно</option>
+                                            <option value="false">Неактивно</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Описание</label>
+                                <textarea name="description" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Удобства</label>
+                                <textarea name="amenities" class="form-control" rows="2" 
+                                          placeholder="Wi-Fi, Кофе, Принтер, Проектор..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Создать
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:fragment="scripts">
+        <script>
+            function editWorkspace(button) {
+                const workspaceId = button.getAttribute('data-workspace-id');
+                // This would need to be implemented in the backend
+                alert('Функция редактирования будет реализована в следующих версиях');
+            }
+
+            function toggleWorkspaceStatus(button) {
+                const workspaceId = button.getAttribute('data-workspace-id');
+                const currentStatus = button.getAttribute('data-current-status') === 'true';
+                const newStatus = !currentStatus;
+                const action = newStatus ? 'активировать' : 'деактивировать';
+                
+                if (confirm(`Вы уверены, что хотите ${action} это рабочее место?`)) {
+                    fetch(`/admin/workspaces/${workspaceId}/toggle-status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `active=${newStatus}`
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Ошибка при изменении статуса рабочего места');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ошибка при изменении статуса рабочего места');
+                    });
+                }
+            }
+
+            // Set default dates for slot generation
+            document.addEventListener('DOMContentLoaded', function() {
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const nextWeek = new Date(today);
+                nextWeek.setDate(nextWeek.getDate() + 7);
+
+                const startDateInputs = document.querySelectorAll('input[name="startDate"]');
+                const endDateInputs = document.querySelectorAll('input[name="endDate"]');
+
+                startDateInputs.forEach(input => {
+                    input.value = tomorrow.toISOString().split('T')[0];
+                });
+
+                endDateInputs.forEach(input => {
+                    input.value = nextWeek.toISOString().split('T')[0];
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html>

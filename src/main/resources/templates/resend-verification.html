@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Повторная отправка подтверждения - BookingTower</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .resend-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .resend-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .resend-form {
+            padding: 2rem;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="resend-card">
+                    <div class="resend-header">
+                        <h2><i class="fas fa-envelope me-2"></i>Подтверждение Email</h2>
+                        <p class="mb-0">Повторная отправка письма с подтверждением</p>
+                    </div>
+                    
+                    <div class="resend-form">
+                        <!-- Error/Success Messages -->
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span th:text="${error}">Ошибка</span>
+                        </div>
+                        
+                        <div th:if="${success}" class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span th:text="${success}">Успех</span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="text-muted">
+                                Введите email адрес, для которого нужно повторно отправить письмо с подтверждением.
+                                Если аккаунт существует и не подтвержден, письмо будет отправлено.
+                            </p>
+                        </div>
+                        
+                        <form th:action="@{/resend-verification}" method="post">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email адрес</label>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       placeholder="example@domain.com">
+                            </div>
+                            
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i>Отправить подтверждение
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center">
+                            <p class="mb-2">
+                                <a th:href="@{/login}" class="text-decoration-none">
+                                    <i class="fas fa-arrow-left me-1"></i>Вернуться к входу
+                                </a>
+                            </p>
+                            <p class="mb-0">
+                                <a th:href="@{/register}" class="text-decoration-none">Создать новый аккаунт</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

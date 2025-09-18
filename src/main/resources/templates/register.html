@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - BookingTower</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .register-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .register-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .register-form {
+            padding: 2rem;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        .user-type-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .user-type-option {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .user-type-option:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+        .user-type-option.active {
+            border-color: #667eea;
+            background-color: #667eea;
+            color: white;
+        }
+        .user-type-option input[type="radio"] {
+            display: none;
+        }
+        .fields-section {
+            display: none;
+        }
+        .fields-section.active {
+            display: block;
+        }
+        .inn-lookup {
+            position: relative;
+        }
+        .inn-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .inn-suggestion {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .inn-suggestion:hover {
+            background-color: #f8f9fa;
+        }
+        .inn-suggestion:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="register-container">
+                    <div class="register-header">
+                        <h2><i class="fas fa-user-plus me-2"></i>Регистрация</h2>
+                        <p class="mb-0">Создайте аккаунт в BookingTower</p>
+                    </div>
+
+                    <div class="register-form">
+                        <!-- Error/Success Messages -->
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span th:text="${error}">Ошибка регистрации</span>
+                        </div>
+
+                        <div th:if="${success}" class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span th:text="${success}">Регистрация успешна</span>
+                        </div>
+
+                        <form id="registerForm" th:action="@{/register}" method="post">
+                            <!-- User Type Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Тип пользователя</label>
+                                <div class="user-type-selector">
+                                    <label class="user-type-option active" for="individual">
+                                        <input type="radio" id="individual" name="userType" value="INDIVIDUAL" checked>
+                                        <i class="fas fa-user fa-2x mb-2"></i>
+                                        <div class="fw-bold">Физическое лицо</div>
+                                        <small>Для частных лиц</small>
+                                    </label>
+                                    <label class="user-type-option" for="legal">
+                                        <input type="radio" id="legal" name="userType" value="LEGAL_ENTITY">
+                                        <i class="fas fa-building fa-2x mb-2"></i>
+                                        <div class="fw-bold">Юридическое лицо</div>
+                                        <small>Для компаний</small>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Common Fields -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label for="email" class="form-label">Email *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">Пароль *</label>
+                                    <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirmPassword" class="form-label">Подтвердите пароль *</label>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                </div>
+                            </div>
+
+                            <!-- Individual User Fields -->
+                            <div id="individualFields" class="fields-section active">
+                                <h5 class="mb-3"><i class="fas fa-user me-2"></i>Личные данные</h5>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="lastName" class="form-label">Фамилия *</label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="firstName" class="form-label">Имя *</label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="middleName" class="form-label">Отчество</label>
+                                        <input type="text" class="form-control" id="middleName" name="middleName">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Телефон</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+7 (999) 999-99-99">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Legal Entity Fields -->
+                            <div id="legalFields" class="fields-section">
+                                <h5 class="mb-3"><i class="fas fa-building me-2"></i>Данные организации</h5>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="companyName" class="form-label">Название организации *</label>
+                                        <input type="text" class="form-control" id="companyName" name="companyName">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="inn" class="form-label">ИНН *</label>
+                                        <div class="inn-lookup">
+                                            <input type="text" class="form-control" id="inn" name="inn" maxlength="12" placeholder="1234567890">
+                                            <div id="innSuggestions" class="inn-suggestions"></div>
+                                        </div>
+                                        <small class="form-text text-muted">Введите ИНН для автозаполнения данных</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="kpp" class="form-label">КПП</label>
+                                        <input type="text" class="form-control" id="kpp" name="kpp" maxlength="9" placeholder="123456789">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="ogrn" class="form-label">ОГРН</label>
+                                        <input type="text" class="form-control" id="ogrn" name="ogrn" maxlength="15" placeholder="1234567890123">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="legalAddress" class="form-label">Юридический адрес</label>
+                                        <textarea class="form-control" id="legalAddress" name="legalAddress" rows="2"></textarea>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="actualAddress" class="form-label">Фактический адрес</label>
+                                        <textarea class="form-control" id="actualAddress" name="actualAddress" rows="2"></textarea>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="directorName" class="form-label">ФИО руководителя</label>
+                                        <input type="text" class="form-control" id="directorName" name="directorName">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Зарегистрироваться
+                                </button>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="mb-0">Уже есть аккаунт? <a th:href="@{/login}" class="text-decoration-none">Войти</a></p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+            const userTypeOptions = document.querySelectorAll('.user-type-option');
+            const individualFields = document.getElementById('individualFields');
+            const legalFields = document.getElementById('legalFields');
+            const form = document.getElementById('registerForm');
+
+            // Handle user type selection
+            userTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    // Update visual selection
+                    userTypeOptions.forEach(option => option.classList.remove('active'));
+                    this.parentElement.classList.add('active');
+
+                    // Show/hide appropriate fields
+                    if (this.value === 'INDIVIDUAL') {
+                        individualFields.classList.add('active');
+                        legalFields.classList.remove('active');
+                        setFieldsRequired(individualFields, true);
+                        setFieldsRequired(legalFields, false);
+                    } else {
+                        individualFields.classList.remove('active');
+                        legalFields.classList.add('active');
+                        setFieldsRequired(individualFields, false);
+                        setFieldsRequired(legalFields, true);
+                    }
+                });
+            });
+
+            // Handle user type option clicks
+            userTypeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change'));
+                });
+            });
+
+            // Set required fields based on user type
+            function setFieldsRequired(container, required) {
+                const requiredFields = container.querySelectorAll('input[data-required="true"], input[name="lastName"], input[name="firstName"], input[name="companyName"], input[name="inn"]');
+                requiredFields.forEach(field => {
+                    field.required = required;
+                });
+            }
+
+            // Password confirmation validation
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+
+            function validatePassword() {
+                if (password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('Пароли не совпадают');
+                } else {
+                    confirmPassword.setCustomValidity('');
+                }
+            }
+
+            password.addEventListener('change', validatePassword);
+            confirmPassword.addEventListener('keyup', validatePassword);
+
+            // Phone number formatting
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.startsWith('8')) value = '7' + value.slice(1);
+                if (value.startsWith('7') && value.length <= 11) {
+                    const formatted = value.replace(/^7(\d{3})(\d{3})(\d{2})(\d{2})$/, '+7 ($1) $2-$3-$4');
+                    if (formatted !== value) e.target.value = formatted;
+                }
+            });
+
+            // INN lookup functionality (placeholder for DaData integration)
+            const innInput = document.getElementById('inn');
+            const innSuggestions = document.getElementById('innSuggestions');
+            let innTimeout;
+
+            innInput.addEventListener('input', function() {
+                clearTimeout(innTimeout);
+                const inn = this.value.replace(/\D/g, '');
+
+                if (inn.length >= 10) {
+                    innTimeout = setTimeout(() => {
+                        lookupCompanyByInn(inn);
+                    }, 500);
+                } else {
+                    innSuggestions.style.display = 'none';
+                }
+            });
+
+            // DaData integration for company lookup
+            function lookupCompanyByInn(inn) {
+                console.log('Looking up company by INN:', inn);
+
+                // Show loading indicator
+                const innInput = document.getElementById('inn');
+                const suggestions = document.getElementById('innSuggestions');
+
+                innInput.classList.add('is-loading');
+                suggestions.innerHTML = '<div class="inn-suggestion">Поиск...</div>';
+                suggestions.style.display = 'block';
+
+                // Make AJAX request to our API
+                fetch(`/api/dadata/company/${inn}`)
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else if (response.status === 404) {
+                            throw new Error('Компания не найдена');
+                        } else {
+                            throw new Error('Ошибка поиска');
+                        }
+                    })
+                    .then(companyInfo => {
+                        console.log('Company info received:', companyInfo);
+                        displayCompanyInfo(companyInfo);
+                        suggestions.style.display = 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error looking up company:', error);
+                        suggestions.innerHTML = `<div class="inn-suggestion text-muted">${error.message}</div>`;
+                        setTimeout(() => {
+                            suggestions.style.display = 'none';
+                        }, 3000);
+                    })
+                    .finally(() => {
+                        innInput.classList.remove('is-loading');
+                    });
+            }
+
+            // Display company information in form fields
+            function displayCompanyInfo(companyInfo) {
+                if (!companyInfo) return;
+
+                // Fill company fields
+                if (companyInfo.name) {
+                    document.getElementById('companyName').value = companyInfo.name;
+                }
+
+                if (companyInfo.ogrn) {
+                    document.getElementById('ogrn').value = companyInfo.ogrn;
+                }
+
+                if (companyInfo.kpp) {
+                    document.getElementById('kpp').value = companyInfo.kpp;
+                }
+
+                if (companyInfo.legalAddress) {
+                    document.getElementById('legalAddress').value = companyInfo.legalAddress;
+                    // Also fill actual address if it's empty
+                    const actualAddress = document.getElementById('actualAddress');
+                    if (!actualAddress.value.trim()) {
+                        actualAddress.value = companyInfo.legalAddress;
+                    }
+                }
+
+                if (companyInfo.directorName) {
+                    document.getElementById('directorName').value = companyInfo.directorName;
+                }
+
+                // Show success message
+                showTemporaryMessage('Данные компании загружены успешно!', 'success');
+            }
+
+            // Show temporary message
+            function showTemporaryMessage(message, type = 'info') {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    <i class="fas fa-info-circle me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                const form = document.getElementById('registerForm');
+                form.insertBefore(alertDiv, form.firstChild);
+
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+
+            // Form submission validation
+            form.addEventListener('submit', function(e) {
+                const userType = document.querySelector('input[name="userType"]:checked').value;
+
+                if (userType === 'INDIVIDUAL') {
+                    const lastName = document.getElementById('lastName').value.trim();
+                    const firstName = document.getElementById('firstName').value.trim();
+
+                    if (!lastName || !firstName) {
+                        e.preventDefault();
+                        alert('Пожалуйста, заполните обязательные поля: Фамилия и Имя');
+                        return;
+                    }
+                } else if (userType === 'LEGAL_ENTITY') {
+                    const companyName = document.getElementById('companyName').value.trim();
+                    const inn = document.getElementById('inn').value.trim();
+
+                    if (!companyName || !inn) {
+                        e.preventDefault();
+                        alert('Пожалуйста, заполните обязательные поля: Название организации и ИНН');
+                        return;
+                    }
+
+                    if (inn.length < 10 || inn.length > 12) {
+                        e.preventDefault();
+                        alert('ИНН должен содержать 10 или 12 цифр');
+                        return;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
