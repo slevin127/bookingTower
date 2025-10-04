@@ -43,7 +43,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Statistics Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">
@@ -83,7 +83,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Filters -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -127,7 +127,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Workspaces Table -->
             <div class="row">
                 <div class="col-12">
@@ -235,7 +235,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Workspace Detail Modals -->
         <div th:each="workspace : ${workspaces}" 
              class="modal fade" 
@@ -293,7 +293,7 @@
                                 <div th:unless="${workspace.amenities}">
                                     <p class="text-muted">Удобства не указаны</p>
                                 </div>
-                                
+
                                 <h6 class="mt-3">Места</h6>
                                 <div class="row">
                                     <div th:each="seat : ${workspace.seats}" class="col-6 mb-2">
@@ -323,7 +323,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Generate Slots Modals -->
         <div th:each="workspace : ${workspaces}" 
              class="modal fade" 
@@ -339,6 +339,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form th:action="@{/admin/workspaces/{id}/generate-slots(id=${workspace.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">Дата начала</label>
@@ -383,7 +384,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Add Workspace Modal -->
         <div class="modal fade" id="addWorkspaceModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -395,7 +396,8 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form action="/admin/workspaces" method="post">
+                    <form th:action="@{/admin/workspaces}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-6">
@@ -454,11 +456,16 @@
     </div>
 
     <th:block th:fragment="scripts">
-        <script>
+        <script th:inline="javascript">
+            // CSRF token for AJAX requests
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
             function editWorkspace(button) {
                 const workspaceId = button.getAttribute('data-workspace-id');
-                // This would need to be implemented in the backend
-                alert('Функция редактирования будет реализована в следующих версиях');
+                // For now, redirect to a simple edit page or show current workspace details
+                // This could be enhanced with a proper edit modal in the future
+                window.location.href = `/admin/workspaces/${workspaceId}/edit`;
             }
 
             function toggleWorkspaceStatus(button) {
@@ -466,12 +473,13 @@
                 const currentStatus = button.getAttribute('data-current-status') === 'true';
                 const newStatus = !currentStatus;
                 const action = newStatus ? 'активировать' : 'деактивировать';
-                
+
                 if (confirm(`Вы уверены, что хотите ${action} это рабочее место?`)) {
                     fetch(`/admin/workspaces/${workspaceId}/toggle-status`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
+                            [csrfHeader]: csrfToken
                         },
                         body: `active=${newStatus}`
                     })
@@ -489,7 +497,7 @@
                 }
             }
 
-            // Set default dates for slot generation
+            // Установить даты по умолчанию для генерации слотов
             document.addEventListener('DOMContentLoaded', function() {
                 const today = new Date();
                 const tomorrow = new Date(today);

@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
 
+/**
+ * Сущность WorkspaceSeat доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "workspace_seats", indexes = {
     @Index(name = "idx_seat_workspace", columnList = "workspace_id"),
@@ -33,7 +36,7 @@ public class WorkspaceSeat {
     @Column(nullable = false)
     private Boolean active = true;
     
-    // Constructors
+    // Конструкторы
     public WorkspaceSeat() {}
     
     public WorkspaceSeat(Workspace workspace, String code) {
@@ -47,7 +50,7 @@ public class WorkspaceSeat {
         this.description = description;
     }
     
-    // Business methods
+    // Бизнес-методы
     public boolean isActive() {
         return active != null && active && workspace != null && workspace.isActive();
     }
@@ -59,7 +62,7 @@ public class WorkspaceSeat {
         return code;
     }
     
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -122,3 +125,4 @@ public class WorkspaceSeat {
                 '}';
     }
 }
+

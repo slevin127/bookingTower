@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий PaymentRepository для доступа к данным BookingTower.
+ */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     

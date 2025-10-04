@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий CalendarSlotRepository для доступа к данным BookingTower.
+ */
 @Repository
 public interface CalendarSlotRepository extends JpaRepository<CalendarSlot, Long> {
     
@@ -65,6 +68,17 @@ public interface CalendarSlotRepository extends JpaRepository<CalendarSlot, Long
     
     @Query("SELECT cs FROM CalendarSlot cs WHERE cs.seat.id = :seatId AND cs.status = 'BOOKED' AND cs.startAt >= :startDate ORDER BY cs.startAt")
     List<CalendarSlot> findBookedSlotsBySeatFromDate(@Param("seatId") Long seatId, @Param("startDate") LocalDateTime startDate);
+    
+    @Query("SELECT cs FROM CalendarSlot cs WHERE cs.seat.workspace.id = :workspaceId AND cs.startAt >= :startDate AND cs.endAt <= :endDate ORDER BY cs.seat.code, cs.startAt")
+    List<CalendarSlot> findByWorkspaceAndDateRange(@Param("workspaceId") Long workspaceId,
+                                                  @Param("startDate") LocalDateTime startDate,
+                                                  @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT cs FROM CalendarSlot cs WHERE cs.seat.workspace.id = :workspaceId AND cs.startAt >= :startDate AND cs.endAt <= :endDate AND cs.status = :status ORDER BY cs.seat.code, cs.startAt")
+    List<CalendarSlot> findByWorkspaceAndDateRangeAndStatus(@Param("workspaceId") Long workspaceId,
+                                                           @Param("startDate") LocalDateTime startDate,
+                                                           @Param("endDate") LocalDateTime endDate,
+                                                           @Param("status") CalendarSlot.SlotStatus status);
     
     boolean existsBySeatIdAndStartAtAndEndAt(Long seatId, LocalDateTime startAt, LocalDateTime endAt);
 }

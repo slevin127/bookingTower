@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Сервис BookingService, инкапсулирующий бизнес-логику BookingTower.
+ */
 @Service
 @Transactional
 public class BookingService {
@@ -60,7 +63,7 @@ public class BookingService {
             throw new IllegalStateException("Slot is not available for holding");
         }
         
-        // Check if user already has active holds
+        // Проверяем, есть ли у пользователя активные удержания
         List<CalendarSlot> activeHolds = calendarSlotRepository.findActiveHoldsByUser(userId, LocalDateTime.now());
         if (activeHolds.size() >= 3) { // Limit to 3 concurrent holds
             throw new IllegalStateException("User has too many active holds");
@@ -132,7 +135,7 @@ public class BookingService {
             throw new IllegalStateException("Booking cannot be canceled");
         }
         
-        // Check cancellation policy
+        // Проверяем правила отмены
         LocalDateTime bookingStart = booking.getBookingStartTime();
         LocalDateTime cancellationDeadline = bookingStart.minusHours(cancellationHoursBefore);
         
@@ -289,3 +292,4 @@ public class BookingService {
         }
     }
 }
+

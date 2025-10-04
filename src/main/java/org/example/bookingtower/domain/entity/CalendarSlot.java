@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Сущность CalendarSlot доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "calendar_slots", 
     indexes = {
@@ -52,10 +55,11 @@ public class CalendarSlot {
     public enum SlotStatus {
         OPEN,    // Available for booking
         HELD,    // Temporarily held by user (10 minutes)
-        BOOKED   // Confirmed booking
+        BOOKED,  // Confirmed booking
+        FROZEN   // Temporarily unavailable (admin controlled)
     }
     
-    // Constructors
+    // Конструкторы
     public CalendarSlot() {}
     
     public CalendarSlot(WorkspaceSeat seat, LocalDateTime startAt, LocalDateTime endAt) {
@@ -64,7 +68,7 @@ public class CalendarSlot {
         this.endAt = endAt;
     }
     
-    // Business methods
+    // Бизнес-методы
     public boolean isAvailable() {
         return status == SlotStatus.OPEN || (status == SlotStatus.HELD && isHoldExpired());
     }
@@ -75,6 +79,10 @@ public class CalendarSlot {
     
     public boolean isBooked() {
         return status == SlotStatus.BOOKED;
+    }
+    
+    public boolean isFrozen() {
+        return status == SlotStatus.FROZEN;
     }
     
     public boolean isHoldExpired() {
@@ -104,11 +112,26 @@ public class CalendarSlot {
         this.holdExpiresAt = null;
     }
     
+    public void freeze() {
+        if (status == SlotStatus.BOOKED) {
+            throw new IllegalStateException("Cannot freeze a booked slot");
+        }
+        this.status = SlotStatus.FROZEN;
+        this.holdUserId = null;
+        this.holdExpiresAt = null;
+    }
+    
+    public void unfreeze() {
+        if (status == SlotStatus.FROZEN) {
+            this.status = SlotStatus.OPEN;
+        }
+    }
+    
     public boolean isHeldBy(Long userId) {
         return status == SlotStatus.HELD && Objects.equals(holdUserId, userId) && !isHoldExpired();
     }
     
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -191,3 +214,4 @@ public class CalendarSlot {
                 '}';
     }
 }
+

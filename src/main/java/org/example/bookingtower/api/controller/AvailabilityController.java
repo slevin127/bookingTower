@@ -15,6 +15,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+/**
+ * REST-контроллер AvailabilityController, предоставляющий API BookingTower.
+ */
 @RestController
 @RequestMapping("/api/availability")
 @CrossOrigin(origins = "*")
@@ -101,8 +104,8 @@ public class AvailabilityController {
         logger.info("Getting availability summary for workspace {} on date {}", workspaceId, date);
         
         try {
-            // For single workspace, we need to get its coworking first
-            // This is a simplified version - in a real implementation, you'd have a method to get single workspace summary
+            // Для отдельного рабочего места нужно сначала определить коворкинг
+            // Упрощённая версия: в реальном приложении нужен метод для получения сводки по одному рабочему месту
             List<AvailabilityService.WorkspaceAvailabilitySummary> summaries = 
                 availabilityService.getWorkspaceAvailabilitySummary(1L, date); // Assuming coworking ID 1
             

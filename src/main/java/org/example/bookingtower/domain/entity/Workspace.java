@@ -6,8 +6,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 
+/**
+ * Сущность Workspace доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "workspaces", indexes = {
     @Index(name = "idx_workspace_coworking", columnList = "coworking_id"),
@@ -46,7 +50,11 @@ public class Workspace {
     @Column(nullable = false)
     private Boolean active = true;
     
-    // Constructors
+    // Transient field for workspace seats (not persisted, used for UI)
+    @Transient
+    private List<WorkspaceSeat> seats;
+    
+    // Конструкторы
     public Workspace() {}
     
     public Workspace(Coworking coworking, String name, Integer seatsTotal, BigDecimal pricePerHour) {
@@ -66,12 +74,12 @@ public class Workspace {
         this.pricePerHour = pricePerHour;
     }
     
-    // Business methods
+    // Бизнес-методы
     public boolean isActive() {
         return active != null && active && coworking != null && coworking.getActive();
     }
     
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -136,6 +144,14 @@ public class Workspace {
         this.active = active;
     }
     
+    public List<WorkspaceSeat> getSeats() {
+        return seats;
+    }
+    
+    public void setSeats(List<WorkspaceSeat> seats) {
+        this.seats = seats;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -160,3 +176,4 @@ public class Workspace {
                 '}';
     }
 }
+

@@ -8,6 +8,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+/**
+ * Сервис EmailService, инкапсулирующий бизнес-логику BookingTower.
+ */
 @Service
 public class EmailService {
 

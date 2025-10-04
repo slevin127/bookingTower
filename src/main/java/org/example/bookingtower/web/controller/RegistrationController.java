@@ -13,6 +13,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 
+/**
+ * Веб-контроллер RegistrationController для страниц приложения BookingTower.
+ */
 @Controller
 public class RegistrationController {
 
@@ -39,19 +42,19 @@ public class RegistrationController {
         
         logger.info("Processing registration for email: {}, userType: {}", form.getEmail(), form.getUserType());
 
-        // Validate form
+        // Проверяем корректность формы
         if (bindingResult.hasErrors()) {
             logger.warn("Registration form has validation errors: {}", bindingResult.getAllErrors());
             return "register";
         }
 
-        // Check password confirmation
+        // Проверяем совпадение пароля и подтверждения
         if (!form.getPassword().equals(form.getConfirmPassword())) {
             model.addAttribute("error", "Пароли не совпадают");
             return "register";
         }
 
-        // Validate required fields based on user type
+        // Проверяем обязательные поля в зависимости от типа пользователя
         if (form.getUserType() == User.UserType.INDIVIDUAL) {
             if (form.getFirstName() == null || form.getFirstName().trim().isEmpty() ||
                 form.getLastName() == null || form.getLastName().trim().isEmpty()) {
@@ -65,7 +68,7 @@ public class RegistrationController {
                 return "register";
             }
             
-            // Validate INN format
+            // Проверяем формат ИНН
             String cleanInn = form.getInn().replaceAll("\\D", "");
             if (cleanInn.length() != 10 && cleanInn.length() != 12) {
                 model.addAttribute("error", "ИНН должен содержать 10 или 12 цифр");
@@ -74,7 +77,7 @@ public class RegistrationController {
         }
 
         try {
-            // Create user
+            // Создаём пользователя
             User user = userService.registerUserWithProfile(
                 form.getEmail(),
                 form.getPassword(),
@@ -107,7 +110,7 @@ public class RegistrationController {
             boolean verified = userService.verifyEmail(token);
             
             if (verified) {
-                redirectAttributes.addFlashAttribute("success", "Email успешно подтвержден! Теперь вы можете войти в систему.");
+                redirectAttributes.addFlashAttribute("success", "Email СѓСЃРїРµС€РЅРѕ РїРѕРґС‚РІРµСЂР¶РґРµРЅ! РўРµРїРµСЂСЊ РІС‹ РјРѕР¶РµС‚Рµ РІРѕР№С‚Рё РІ СЃРёСЃС‚РµРјСѓ.");
                 return "redirect:/login";
             } else {
                 model.addAttribute("error", "Недействительная или истекшая ссылка подтверждения");
@@ -143,20 +146,20 @@ public class RegistrationController {
         }
     }
 
-    // DTO class for registration form
+    // DTO для формы регистрации
     public static class RegistrationForm {
         private String email;
         private String password;
         private String confirmPassword;
         private User.UserType userType = User.UserType.INDIVIDUAL;
         
-        // Individual user fields
+        // Поля для физического лица
         private String firstName;
         private String lastName;
         private String middleName;
         private String phone;
         
-        // Legal entity fields
+        // Поля для юридического лица
         private String companyName;
         private String inn;
         private String ogrn;
@@ -165,10 +168,10 @@ public class RegistrationController {
         private String actualAddress;
         private String directorName;
 
-        // Constructors
+        // Конструкторы
         public RegistrationForm() {}
 
-        // Getters and setters
+        // Геттеры и сеттеры
         public String getEmail() {
             return email;
         }
@@ -290,3 +293,4 @@ public class RegistrationController {
         }
     }
 }
+

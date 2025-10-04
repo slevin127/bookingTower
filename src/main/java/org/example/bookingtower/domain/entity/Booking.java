@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Сущность Booking доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "bookings", indexes = {
     @Index(name = "idx_booking_user", columnList = "user_id"),
@@ -77,7 +80,7 @@ public class Booking {
         NO_SHOW     // User didn't show up
     }
     
-    // Constructors
+    // Конструкторы
     public Booking() {}
     
     public Booking(User user, WorkspaceSeat seat, CalendarSlot slot, BigDecimal totalPrice) {
@@ -87,7 +90,7 @@ public class Booking {
         this.totalPrice = totalPrice;
     }
     
-    // Business methods
+    // Бизнес-методы
     public boolean canBeCanceled() {
         return status == BookingStatus.CONFIRMED || status == BookingStatus.PENDING;
     }
@@ -135,7 +138,7 @@ public class Booking {
         return slot != null ? slot.getEndAt() : null;
     }
     
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -256,3 +259,4 @@ public class Booking {
                 '}';
     }
 }
+

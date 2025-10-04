@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий CoworkingRepository для доступа к данным BookingTower.
+ */
 @Repository
 public interface CoworkingRepository extends JpaRepository<Coworking, Long> {
     

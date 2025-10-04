@@ -8,6 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+/**
+ * REST-контроллер DaDataController, предоставляющий API BookingTower.
+ */
 @RestController
 @RequestMapping("/api/dadata")
 public class DaDataController {
@@ -25,7 +28,7 @@ public class DaDataController {
     public Mono<ResponseEntity<DaDataService.CompanyInfo>> getCompanyByInn(@PathVariable String inn) {
         logger.info("Received request to lookup company by INN: {}", inn);
 
-        // Validate INN format
+        // Проверяем формат ИНН
         if (inn == null || inn.trim().isEmpty()) {
             return Mono.just(ResponseEntity.badRequest().build());
         }
@@ -94,3 +97,4 @@ public class DaDataController {
         }
     }
 }
+

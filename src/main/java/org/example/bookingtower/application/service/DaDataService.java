@@ -13,6 +13,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Сервис DaDataService, инкапсулирующий бизнес-логику BookingTower.
+ */
 @Service
 public class DaDataService {
 
@@ -95,7 +98,7 @@ public class DaDataService {
         return companyInfo;
     }
 
-    // DTO classes for DaData API response
+    // DTO для ответа API DaData
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DaDataResponse {
         private List<DaDataSuggestion> suggestions;
@@ -269,7 +272,7 @@ public class DaDataService {
         private String directorName;
         private String directorPost;
 
-        // Getters and setters
+        // Геттеры и сеттеры
         public String getName() {
             return name;
         }
@@ -335,3 +338,5 @@ public class DaDataService {
         }
     }
 }
+
+

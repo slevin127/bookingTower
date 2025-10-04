@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Сервис UserService, инкапсулирующий бизнес-логику BookingTower.
+ */
 @Service
 @Transactional
 public class UserService {

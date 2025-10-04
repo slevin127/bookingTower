@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Сервис AvailabilityService, инкапсулирующий бизнес-логику BookingTower.
+ */
 @Service
 @Transactional
 public class AvailabilityService {
@@ -59,7 +62,7 @@ public class AvailabilityService {
         LocalDateTime startDateTime = date.atTime(fromTime != null ? fromTime : LocalTime.parse(defaultOpenFrom));
         LocalDateTime endDateTime = date.atTime(toTime != null ? toTime : LocalTime.parse(defaultOpenTo));
         
-        // Validate time range against coworking hours
+        // Проверяем, что интервал соответствует часам работы коворкинга
         Coworking coworking = workspace.getCoworking();
         if (!coworking.isOpenAt(startDateTime.toLocalTime()) || !coworking.isOpenAt(endDateTime.toLocalTime())) {
             throw new IllegalArgumentException("Requested time is outside coworking operating hours");
@@ -115,7 +118,7 @@ public class AvailabilityService {
         List<CalendarSlot> slotsToCreate = new ArrayList<>();
         
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            // Skip weekends if needed (can be made configurable)
+            // При необходимости можно пропускать выходные (можно сделать настраиваемым)
             if (date.getDayOfWeek().getValue() > 5) { // Saturday = 6, Sunday = 7
                 continue;
             }
@@ -129,7 +132,7 @@ public class AvailabilityService {
                     
                     LocalDateTime slotEnd = currentSlotStart.plusMinutes(slotDurationMinutes);
                     
-                    // Check if slot already exists
+                    // Проверяем, что слот ещё не существует
                     if (!calendarSlotRepository.existsBySeatIdAndStartAtAndEndAt(seat.getId(), currentSlotStart, slotEnd)) {
                         CalendarSlot slot = new CalendarSlot(seat, currentSlotStart, slotEnd);
                         slotsToCreate.add(slot);
@@ -155,7 +158,7 @@ public class AvailabilityService {
         
         for (Workspace workspace : activeWorkspaces) {
             try {
-                generateSlots(workspace.getId(), startDate, endDate, null, null, 60); // 1-hour slots
+                generateSlots(workspace.getId(), startDate, endDate, null, null, 60); // Слоты по часу
             } catch (Exception e) {
                 logger.error("Failed to generate slots for workspace {}", workspace.getId(), e);
             }
@@ -251,7 +254,7 @@ public class AvailabilityService {
             this.availabilityPercentage = availabilityPercentage;
         }
         
-        // Getters
+        // Геттеры
         public Long getWorkspaceId() { return workspaceId; }
         public String getWorkspaceName() { return workspaceName; }
         public long getTotalSlots() { return totalSlots; }
@@ -260,3 +263,4 @@ public class AvailabilityService {
         public double getAvailabilityPercentage() { return availabilityPercentage; }
     }
 }
+

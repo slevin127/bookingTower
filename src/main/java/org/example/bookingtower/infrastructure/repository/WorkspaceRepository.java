@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий WorkspaceRepository для доступа к данным BookingTower.
+ */
 @Repository
 public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     

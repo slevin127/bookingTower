@@ -13,6 +13,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
+/**
+ * Конфигурационный класс SecurityConfig приложения BookingTower.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {

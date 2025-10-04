@@ -24,6 +24,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+/**
+ * Веб-контроллер ClientController для страниц приложения BookingTower.
+ */
 @Controller
 @RequestMapping("/client")
 public class ClientController {
@@ -47,11 +50,11 @@ public class ClientController {
             (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
-        // Get user's recent bookings
+        // Получаем недавние бронирования пользователя
         Pageable recentBookingsPageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
         Page<Booking> recentBookings = bookingService.getUserBookings(user.getId(), recentBookingsPageable);
 
-        // Get user's upcoming bookings
+        // Получаем предстоящие бронирования пользователя
         List<Booking> upcomingBookings = bookingService.getUserBookings(user.getId()).stream()
             .filter(booking -> booking.getSlot().getStartAt().isAfter(java.time.LocalDateTime.now()))
             .filter(booking -> booking.getStatus() == Booking.BookingStatus.CONFIRMED || 
@@ -99,7 +102,7 @@ public class ClientController {
                 model.addAttribute("selectedWorkspaceId", workspaceId);
                 model.addAttribute("selectedDate", date);
                 
-                // Get workspace details
+                // Получаем информацию о рабочем месте
                 Workspace selectedWorkspace = workspaceRepository.findById(workspaceId).orElse(null);
                 model.addAttribute("selectedWorkspace", selectedWorkspace);
             } catch (Exception e) {

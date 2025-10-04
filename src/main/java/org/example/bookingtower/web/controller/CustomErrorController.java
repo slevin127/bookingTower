@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 
+/**
+ * Веб-контроллер CustomErrorController для страниц приложения BookingTower.
+ */
 @Controller
 public class CustomErrorController implements ErrorController {
 
@@ -15,10 +18,10 @@ public class CustomErrorController implements ErrorController {
     public String handleError(HttpServletRequest request, Model model) {
         Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
 
-        // Check if this error is related to logout process
+        // Проверяем, связана ли ошибка с процессом выхода из системы
         String referer = request.getHeader("Referer");
         if (referer != null && referer.contains("/logout")) {
-            // If error occurred during logout, redirect to login page
+            // Если ошибка возникла при выходе, перенаправляем на страницу входа
             return "redirect:/login?logout=true";
         }
 
@@ -38,3 +41,4 @@ public class CustomErrorController implements ErrorController {
         return "redirect:/dashboard";
     }
 }
+

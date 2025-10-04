@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/**
+ * Репозиторий UserRepository для доступа к данным BookingTower.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     

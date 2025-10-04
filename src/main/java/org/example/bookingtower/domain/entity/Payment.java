@@ -12,6 +12,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Сущность Payment доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "payments", indexes = {
     @Index(name = "idx_payment_booking", columnList = "booking_id"),
@@ -96,7 +99,7 @@ public class Payment {
         REFUNDED    // Payment refunded (partially or fully)
     }
     
-    // Constructors
+    // Конструкторы
     public Payment() {}
     
     public Payment(Booking booking, String externalId, BigDecimal amount, String idempotencyKey) {
@@ -106,7 +109,7 @@ public class Payment {
         this.idempotencyKey = idempotencyKey;
     }
     
-    // Business methods
+    // Бизнес-методы
     public boolean canBeRefunded() {
         return status == PaymentStatus.SUCCEEDED && 
                (refundAmount == null || refundAmount.compareTo(amount) < 0);
@@ -167,7 +170,7 @@ public class Payment {
         this.confirmationToken = confirmationToken;
     }
     
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -322,3 +325,4 @@ public class Payment {
                 '}';
     }
 }
+

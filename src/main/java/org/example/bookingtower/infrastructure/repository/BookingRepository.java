@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий BookingRepository для доступа к данным BookingTower.
+ */
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     

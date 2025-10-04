@@ -10,6 +10,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Сущность User доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_user_email", columnList = "email", unique = true)
@@ -59,7 +62,7 @@ public class User {
     @Column(name = "user_type", nullable = false)
     private UserType userType = UserType.INDIVIDUAL;
 
-    // Individual user fields
+    // Поля для физического лица
     @Column(name = "first_name")
     private String firstName;
 
@@ -72,7 +75,7 @@ public class User {
     @Column(name = "phone")
     private String phone;
 
-    // Legal entity fields
+    // Поля для юридического лица
     @Column(name = "company_name")
     private String companyName;
 
@@ -102,7 +105,7 @@ public class User {
         INDIVIDUAL, LEGAL_ENTITY
     }
 
-    // Constructors
+    // Конструкторы
     public User() {}
 
     public User(String email, String passwordHash, Role role) {
@@ -111,7 +114,7 @@ public class User {
         this.role = role;
     }
 
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -339,3 +342,4 @@ public class User {
                 '}';
     }
 }
+

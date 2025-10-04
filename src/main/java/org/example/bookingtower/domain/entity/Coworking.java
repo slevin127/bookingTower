@@ -8,6 +8,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Objects;
 
+/**
+ * Сущность Coworking доменной модели BookingTower.
+ */
 @Entity
 @Table(name = "coworkings")
 public class Coworking {
@@ -39,7 +42,7 @@ public class Coworking {
     @Column(nullable = false)
     private Boolean active = true;
     
-    // Constructors
+    // Конструкторы
     public Coworking() {}
     
     public Coworking(String name, String address) {
@@ -55,7 +58,7 @@ public class Coworking {
         this.openTo = openTo;
     }
     
-    // Business methods
+    // Бизнес-методы
     public ZoneId getZoneId() {
         return ZoneId.of(timezone);
     }
@@ -64,7 +67,7 @@ public class Coworking {
         return !time.isBefore(openFrom) && !time.isAfter(openTo);
     }
     
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }

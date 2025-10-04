@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Веб-контроллер WebController для страниц приложения BookingTower.
+ */
 @Controller
 public class WebController {
 
@@ -36,7 +39,7 @@ public class WebController {
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
-            // Check user role and redirect accordingly
+            // Проверяем роль пользователя и перенаправляем его при необходимости
             if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
                 return "redirect:/admin/dashboard";
             } else if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
@@ -59,3 +62,4 @@ public class WebController {
         return "redirect:/login?logout=true";
     }
 }
+
