@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::sidebar}, ~{::content})}">
+<head>
+    <title>Детали бронирования</title>
+</head>
+<body>
+    <!-- Sidebar Menu -->
+    <ul class="nav flex-column" th:fragment="sidebar">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/client/dashboard}">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Мой кабинет
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/client/book}">
+                <i class="fas fa-plus-circle me-2"></i>
+                Забронировать место
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" th:href="@{/client/bookings}">
+                <i class="fas fa-calendar-check me-2"></i>
+                Мои бронирования
+            </a>
+        </li>
+    </ul>
+
+    <!-- Main Content -->
+    <div th:fragment="content">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-info-circle me-2"></i>
+                                Детали бронирования #<span th:text="${booking.id}">123</span>
+                            </div>
+                            <span class="badge fs-6" 
+                                  th:classappend="${booking.status.name() == 'CONFIRMED'} ? 'bg-success' : 
+                                                 (${booking.status.name() == 'PENDING'} ? 'bg-warning text-dark' : 
+                                                 (${booking.status.name() == 'CANCELLED'} ? 'bg-danger' : 
+                                                 (${booking.status.name() == 'COMPLETED'} ? 'bg-info' : 'bg-secondary')))"
+                                  th:text="${booking.status.name() == 'CONFIRMED' ? 'Подтверждено' : 
+                                           (booking.status.name() == 'PENDING' ? 'Ожидает' : 
+                                           (booking.status.name() == 'CANCELLED' ? 'Отменено' : 
+                                           (booking.status.name() == 'COMPLETED' ? 'Завершено' : booking.status.name())))}">CONFIRMED</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Success Message -->
+                        <div th:if="${param.success}" class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span th:if="${param.success[0] == 'booking-confirmed'}">Бронирование успешно подтверждено!</span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-building me-2"></i>Рабочее пространство</h6>
+                                <p th:text="${booking.seat.workspace.name}" class="fw-bold">Workspace Name</p>
+                                <p th:text="${booking.seat.workspace.description}" class="text-muted">Description</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-chair me-2"></i>Место</h6>
+                                <p th:text="${booking.seat.name}" class="fw-bold">Seat Name</p>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-calendar me-2"></i>Дата</h6>
+                                <p th:text="${#temporals.format(booking.slot.startAt, 'dd.MM.yyyy')}" class="fw-bold">01.01.2024</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-clock me-2"></i>Время</h6>
+                                <p th:text="${#temporals.format(booking.slot.startAt, 'HH:mm')} + ' - ' + ${#temporals.format(booking.slot.endAt, 'HH:mm')}" class="fw-bold">10:00 - 11:00</p>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-ruble-sign me-2"></i>Стоимость</h6>
+                                <p th:text="${booking.totalPrice} + ' ' + ${booking.currency}" class="fw-bold text-primary">1000 RUB</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-clock me-2"></i>Дата создания</h6>
+                                <p th:text="${#temporals.format(booking.createdAt, 'dd.MM.yyyy HH:mm')}" class="fw-bold">01.01.2024 10:00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <i class="fas fa-cogs me-2"></i>
+                        Действия
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group" role="group">
+                            <a th:href="@{/client/bookings}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Назад к списку
+                            </a>
+                            <button th:if="${booking.status.name() == 'CONFIRMED' or booking.status.name() == 'PENDING'}" 
+                                    type="button" 
+                                    class="btn btn-outline-danger"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#cancelModal">
+                                <i class="fas fa-times me-2"></i>
+                                Отменить бронирование
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Информация
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${booking.slot.startAt.isAfter(#temporals.createNow())}" class="alert alert-info">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>Предстоящее бронирование</strong>
+                            <br>
+                            <small>Не забудьте прийти в указанное время</small>
+                        </div>
+
+                        <div th:if="${booking.slot.startAt.isBefore(#temporals.createNow()) and booking.slot.endAt.isAfter(#temporals.createNow())}" 
+                             class="alert alert-success">
+                            <i class="fas fa-play me-2"></i>
+                            <strong>Активно сейчас</strong>
+                            <br>
+                            <small>Ваше бронирование в процессе</small>
+                        </div>
+
+                        <div th:if="${booking.slot.endAt.isBefore(#temporals.createNow()) and booking.status.name() == 'CONFIRMED'}" 
+                             class="alert alert-secondary">
+                            <i class="fas fa-check me-2"></i>
+                            <strong>Завершено</strong>
+                            <br>
+                            <small>Спасибо за использование наших услуг</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel Modal -->
+        <div th:if="${booking.status.name() == 'CONFIRMED' or booking.status.name() == 'PENDING'}" 
+             class="modal fade" id="cancelModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Отмена бронирования</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/client/booking/{id}/cancel(id=${booking.id})}" method="post">
+                        <div class="modal-body">
+                            <p>Вы уверены, что хотите отменить это бронирование?</p>
+                            <div class="mb-3">
+                                <label class="form-label">Причина отмены (необязательно)</label>
+                                <textarea class="form-control" name="reason" rows="3" placeholder="Укажите причину отмены..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Назад</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i>
+                                Отменить бронирование
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

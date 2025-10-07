@@ -24,6 +24,11 @@ public class DaDataController {
         this.daDataService = daDataService;
     }
 
+    /**
+     * Метод для получения информации о компании по ИНН
+     * @param inn
+     * @return
+     */
     @GetMapping("/company/{inn}")
     public Mono<ResponseEntity<DaDataService.CompanyInfo>> getCompanyByInn(@PathVariable String inn) {
         logger.info("Received request to lookup company by INN: {}", inn);
@@ -53,6 +58,11 @@ public class DaDataController {
                 .doOnError(error -> logger.error("Error processing company lookup for INN {}: {}", cleanInn, error.getMessage()));
     }
 
+    /**
+     * Метод для поиска информации о компании по ИНН
+     * @param request
+     * @return
+     */
     @PostMapping("/company/lookup")
     public Mono<ResponseEntity<DaDataService.CompanyInfo>> lookupCompany(@RequestBody CompanyLookupRequest request) {
         logger.info("Received company lookup request for INN: {}", request.getInn());
@@ -78,7 +88,7 @@ public class DaDataController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    // Request DTO
+    // Request DTO, не реализовано
     public static class CompanyLookupRequest {
         private String inn;
 

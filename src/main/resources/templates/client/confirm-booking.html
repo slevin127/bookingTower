@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::sidebar}, ~{::content})}">
+<head>
+    <title>Подтверждение бронирования</title>
+</head>
+<body>
+    <!-- Sidebar Menu -->
+    <ul class="nav flex-column" th:fragment="sidebar">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/client/dashboard}">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Мой кабинет
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" th:href="@{/client/book}">
+                <i class="fas fa-plus-circle me-2"></i>
+                Забронировать место
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/client/bookings}">
+                <i class="fas fa-calendar-check me-2"></i>
+                Мои бронирования
+            </a>
+        </li>
+    </ul>
+
+    <!-- Main Content -->
+    <div th:fragment="content">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Подтверждение бронирования
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Важно!</strong> Место временно зарезервировано за вами. Подтвердите бронирование в течение нескольких минут.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    Детали бронирования
+                                </h5>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-sm-4"><strong>Пользователь:</strong></div>
+                                            <div class="col-sm-8" th:text="${user.firstName + ' ' + user.lastName}">Имя Фамилия</div>
+                                        </div>
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-sm-4"><strong>Email:</strong></div>
+                                            <div class="col-sm-8" th:text="${user.email}">user@example.com</div>
+                                        </div>
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-sm-4"><strong>Телефон:</strong></div>
+                                            <div class="col-sm-8" th:text="${user.phone ?: 'Не указан'}">+7 (XXX) XXX-XX-XX</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Обратите внимание:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>После подтверждения бронирование станет активным</li>
+                                        <li>Отменить бронирование можно не позднее чем за 2 часа до начала</li>
+                                        <li>В случае неявки плата не возвращается</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-receipt me-2"></i>
+                                            Итого к оплате
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center mb-3">
+                                            <div class="display-6 fw-bold text-primary" th:text="${price} + ' ₽'">1000 ₽</div>
+                                            <small class="text-muted">За весь период</small>
+                                        </div>
+                                        
+                                        <hr>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Базовая стоимость:</span>
+                                            <span th:text="${price} + ' ₽'">1000 ₽</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Скидка:</span>
+                                            <span class="text-success">0 ₽</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Налоги:</span>
+                                            <span>включены</span>
+                                        </div>
+                                        
+                                        <hr>
+                                        
+                                        <div class="d-flex justify-content-between fw-bold">
+                                            <span>К оплате:</span>
+                                            <span th:text="${price} + ' ₽'">1000 ₽</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a th:href="@{/client/book}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>
+                                        Назад к выбору
+                                    </a>
+                                    
+                                    <form method="post" th:action="@{/client/book/confirm}">
+                                        <input type="hidden" name="slotId" th:value="${slotId}">
+                                        <input type="hidden" name="holdToken" th:value="${holdToken}">
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-check me-2"></i>
+                                            Подтвердить бронирование
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:fragment="scripts">
+        <script>
+            // Auto-refresh page to check if hold is still valid
+            let holdCheckInterval = setInterval(function() {
+                // This would typically check the server to see if the hold is still valid
+                // For now, we'll just show a warning after 5 minutes
+                setTimeout(function() {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-warning mt-3';
+                    alertDiv.innerHTML = '<i class="fas fa-clock me-2"></i>Время резервирования истекает. Пожалуйста, подтвердите бронирование как можно скорее.';
+                    document.querySelector('.card-body').appendChild(alertDiv);
+                    clearInterval(holdCheckInterval);
+                }, 300000); // 5 minutes
+            }, 1000);
+        </script>
+    </th:block>
+</body>
+</html>

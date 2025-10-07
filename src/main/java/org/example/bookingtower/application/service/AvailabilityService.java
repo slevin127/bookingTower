@@ -84,7 +84,15 @@ public class AvailabilityService {
         List<CalendarSlot> pageContent = allSlots.subList(start, end);
         return new PageImpl<>(pageContent, pageable, allSlots.size());
     }
-    
+
+    /**
+     * Генерирует слоты календаря для конкретного коворкинга в данную дату
+      * @param coworkingId the unique identifier of the coworking for which slots are to be created
+     * @param date
+     * @param fromTime
+     * @param toTime
+     * @return Список объектов календарного ласка, представляющих доступные слоты для указанного коворкинга в данную дату
+     */
     public List<CalendarSlot> getAvailableSlotsByCoworking(Long coworkingId, LocalDate date, LocalTime fromTime, LocalTime toTime) {
         logger.info("Getting available slots for coworking {} on {} from {} to {}", coworkingId, date, fromTime, toTime);
         
@@ -100,7 +108,21 @@ public class AvailabilityService {
         logger.info("Found {} available slots for coworking", availableSlots.size());
         return availableSlots;
     }
-    
+
+    /**
+     * Генерирует слоты календаря для конкретного рабочего пространства в данную дату
+     * Диапазон и временные ограничения.
+     *
+     * @param workspaceId          the unique identifier of the workspace for which slots are to be created
+     * @param startDate            the start date from which slots generation begins
+     * @param endDate              the end date until which slots generation is carried out
+     * @param dailyOpenTime        the daily opening time for the workspace, overrides workspace's default opening time if not null
+     * @param dailyCloseTime       the daily closing time for the workspace, overrides workspace's default closing time if not null
+     * @param slotDurationMinutes  the duration of each time slot in minutes
+     * @throws IllegalArgumentException if the workspace is not found or inactive,
+     *                                  or if the workspace has no active seats
+     */
+    @Transactional
     public void generateSlots(Long workspaceId, LocalDate startDate, LocalDate endDate, LocalTime dailyOpenTime, LocalTime dailyCloseTime, int slotDurationMinutes) {
         logger.info("Generating slots for workspace {} from {} to {}", workspaceId, startDate, endDate);
         
@@ -118,10 +140,11 @@ public class AvailabilityService {
         List<CalendarSlot> slotsToCreate = new ArrayList<>();
         
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            // При необходимости можно пропускать выходные (можно сделать настраиваемым)
-            if (date.getDayOfWeek().getValue() > 5) { // Saturday = 6, Sunday = 7
-                continue;
-            }
+//             Генерируем слоты для всех дней недели, включая выходные
+//             При необходимости можно настроить исключение определенных дней
+             if (date.getDayOfWeek().getValue() > 5) { // Saturday = 6, Sunday = 7
+                 continue;
+             }
             
             for (WorkspaceSeat seat : seats) {
                 LocalDateTime currentSlotStart = date.atTime(openTime);

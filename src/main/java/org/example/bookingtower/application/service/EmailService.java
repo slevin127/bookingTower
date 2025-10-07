@@ -8,9 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-/**
- * Сервис EmailService, инкапсулирующий бизнес-логику BookingTower.
- */
+
 @Service
 public class EmailService {
 
@@ -29,6 +27,11 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
+    /**
+     * Отправка письма с ссылкой для подтверждения email
+     * @param toEmail
+     * @param verificationToken
+     */
     public void sendEmailVerification(String toEmail, String verificationToken) {
         logger.info("Sending email verification to: {}", toEmail);
 
@@ -49,6 +52,11 @@ public class EmailService {
         sendEmail(toEmail, subject, text);
     }
 
+    /**
+     * Отправка письма с cсылкой для сброса пароля
+     * @param toEmail
+     * @param resetToken
+     */
     public void sendPasswordReset(String toEmail, String resetToken) {
         logger.info("Sending password reset email to: {}", toEmail);
 
@@ -70,6 +78,11 @@ public class EmailService {
         sendEmail(toEmail, subject, text);
     }
 
+    /**
+     * Отправка письма с информацией о бронировании
+     * @param toEmail
+     * @param bookingDetails
+     */
     public void sendBookingConfirmation(String toEmail, String bookingDetails) {
         logger.info("Sending booking confirmation to: {}", toEmail);
 
@@ -88,6 +101,12 @@ public class EmailService {
         sendEmail(toEmail, subject, text);
     }
 
+    /**
+     * Отправка письма с информацией о отмене бронирования
+     * @param toEmail
+     * @param bookingDetails
+     * @param reason
+     */
     public void sendBookingCancellation(String toEmail, String bookingDetails, String reason) {
         logger.info("Sending booking cancellation to: {}", toEmail);
 
@@ -108,6 +127,11 @@ public class EmailService {
         sendEmail(toEmail, subject, text);
     }
 
+    /**
+     * Отправка письма с информацией о напоминании о бронировании
+     * @param toEmail
+     * @param bookingDetails
+     */
     public void sendBookingReminder(String toEmail, String bookingDetails) {
         logger.info("Sending booking reminder to: {}", toEmail);
 
@@ -126,6 +150,11 @@ public class EmailService {
         sendEmail(toEmail, subject, text);
     }
 
+    /**
+     * Отправка письма с информацией о подтверждении оплаты
+     * @param toEmail
+     * @param paymentDetails
+     */
     public void sendPaymentConfirmation(String toEmail, String paymentDetails) {
         logger.info("Sending payment confirmation to: {}", toEmail);
 
@@ -144,6 +173,12 @@ public class EmailService {
         sendEmail(toEmail, subject, text);
     }
 
+    /**
+     * Отправка письма с информацией о отмене оплаты
+     * @param toEmail
+     * @param subject
+     * @param text
+     */
     private void sendEmail(String toEmail, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

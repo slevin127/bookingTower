@@ -37,8 +37,8 @@ public class ClientController {
 
     @Autowired
     public ClientController(BookingService bookingService,
-                           AvailabilityService availabilityService,
-                           WorkspaceRepository workspaceRepository) {
+                            AvailabilityService availabilityService,
+                            WorkspaceRepository workspaceRepository) {
         this.bookingService = bookingService;
         this.availabilityService = availabilityService;
         this.workspaceRepository = workspaceRepository;
@@ -46,8 +46,8 @@ public class ClientController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Authentication authentication) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         // Получаем недавние бронирования пользователя
@@ -56,11 +56,11 @@ public class ClientController {
 
         // Получаем предстоящие бронирования пользователя
         List<Booking> upcomingBookings = bookingService.getUserBookings(user.getId()).stream()
-            .filter(booking -> booking.getSlot().getStartAt().isAfter(java.time.LocalDateTime.now()))
-            .filter(booking -> booking.getStatus() == Booking.BookingStatus.CONFIRMED || 
-                             booking.getStatus() == Booking.BookingStatus.PENDING)
-            .limit(5)
-            .toList();
+                .filter(booking -> booking.getSlot().getStartAt().isAfter(java.time.LocalDateTime.now()))
+                .filter(booking -> booking.getStatus() == Booking.BookingStatus.CONFIRMED ||
+                        booking.getStatus() == Booking.BookingStatus.PENDING)
+                .limit(5)
+                .toList();
 
         model.addAttribute("user", user);
         model.addAttribute("recentBookings", recentBookings.getContent());
@@ -72,10 +72,10 @@ public class ClientController {
 
     @GetMapping("/bookings")
     public String bookings(Model model, Authentication authentication,
-                          @RequestParam(defaultValue = "0") int page,
-                          @RequestParam(defaultValue = "10") int size) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+                           @RequestParam(defaultValue = "0") int page,
+                           @RequestParam(defaultValue = "10") int size) {
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -90,8 +90,8 @@ public class ClientController {
 
     @GetMapping("/book")
     public String bookWorkspace(Model model,
-                               @RequestParam(required = false) Long workspaceId,
-                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+                                @RequestParam(required = false) Long workspaceId,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<Workspace> workspaces = workspaceRepository.findAll();
         model.addAttribute("workspaces", workspaces);
 
@@ -101,7 +101,7 @@ public class ClientController {
                 model.addAttribute("availableSlots", availableSlots);
                 model.addAttribute("selectedWorkspaceId", workspaceId);
                 model.addAttribute("selectedDate", date);
-                
+
                 // Получаем информацию о рабочем месте
                 Workspace selectedWorkspace = workspaceRepository.findById(workspaceId).orElse(null);
                 model.addAttribute("selectedWorkspace", selectedWorkspace);
@@ -115,8 +115,8 @@ public class ClientController {
 
     @PostMapping("/book/hold")
     public String holdSlot(@RequestParam Long slotId, Authentication authentication) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         try {
@@ -129,11 +129,11 @@ public class ClientController {
 
     @GetMapping("/book/confirm")
     public String confirmBooking(@RequestParam Long slotId,
-                                @RequestParam String holdToken,
-                                Model model,
-                                Authentication authentication) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+                                 @RequestParam String holdToken,
+                                 Model model,
+                                 Authentication authentication) {
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         try {
@@ -149,12 +149,21 @@ public class ClientController {
         }
     }
 
+    /**
+     * Обрабатывает запрос на подтверждение бронирования путем подтверждения слота и данных пользователя,
+     * Расчет цены и создание подтвержденного бронирования.
+     *
+     * @param slotId         the ID of the slot to be booked
+     * @param holdToken      the token used to hold the slot temporarily
+     * @param authentication the authentication object containing user details
+     * @return a redirect URL indicating whether the booking was successfully confirmed or an error occurred
+     */
     @PostMapping("/book/confirm")
     public String processBooking(@RequestParam Long slotId,
-                                @RequestParam String holdToken,
-                                Authentication authentication) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+                                 @RequestParam String holdToken,
+                                 Authentication authentication) {
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         try {
@@ -168,8 +177,8 @@ public class ClientController {
 
     @GetMapping("/booking/{bookingId}")
     public String viewBooking(@PathVariable Long bookingId, Model model, Authentication authentication) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         Booking booking = bookingService.getBooking(bookingId, user.getId()).orElse(null);
@@ -183,10 +192,10 @@ public class ClientController {
 
     @PostMapping("/booking/{bookingId}/cancel")
     public String cancelBooking(@PathVariable Long bookingId,
-                               @RequestParam(defaultValue = "Отменено пользователем") String reason,
-                               Authentication authentication) {
-        CustomUserDetailsService.CustomUserPrincipal principal = 
-            (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
+                                @RequestParam(defaultValue = "Отменено пользователем") String reason,
+                                Authentication authentication) {
+        CustomUserDetailsService.CustomUserPrincipal principal =
+                (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
 
         try {

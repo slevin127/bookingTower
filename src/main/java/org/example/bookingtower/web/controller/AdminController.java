@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -43,6 +44,19 @@ public class AdminController {
     private final AvailabilityService availabilityService;
     private final BookingService bookingService;
 
+    /**
+     * Constructor for AdminController.
+     * Initializes the necessary repositories and services required for the controller's functionality.
+     *
+     * @param userRepository Repository для управления пользовательскими данными.
+     * @param bookingRepository Repository для управления данными бронирования.
+     * @param workspaceRepository Repository для управления данными рабочей области.
+     * @param coworkingRepository Repository Для управления данными коворкинга.
+     * @param workspaceSeatRepository Repository Для управления данными сидений рабочей области.
+     * @param calendarSlotRepository Repository Для управления данными слота календаря.
+     * @param availabilityService Service Обработка логики, связанной с доступностью.
+     * @param bookingService Service Обработка логики, связанной с бронированием.
+     */
     @Autowired
     public AdminController(UserRepository userRepository, 
                           BookingRepository bookingRepository,
@@ -200,38 +214,41 @@ public class AdminController {
     }
 
     @PostMapping("/workspaces")
+    @Transactional
     public String createWorkspace(@RequestParam String name,
-                                 @RequestParam Long coworkingId,
-                                 @RequestParam Integer seatsTotal,
-                                 @RequestParam BigDecimal pricePerHour,
-                                 @RequestParam(defaultValue = "true") Boolean active,
-                                 @RequestParam(required = false) String description,
-                                 @RequestParam(required = false) String amenities,
-                                 RedirectAttributes redirectAttributes) {
+                                  @RequestParam Long coworkingId,
+                                  @RequestParam Integer seatsTotal,
+                                  @RequestParam BigDecimal pricePerHour,
+                                  @RequestParam(defaultValue = "true") Boolean active,
+                                  @RequestParam(required = false) String description,
+                                  @RequestParam(required = false) String amenities,
+                                  RedirectAttributes redirectAttributes) {
         try {
-            Optional<Coworking> coworking = coworkingRepository.findById(coworkingId);
-            if (coworking.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Коворкинг не найден");
-                return "redirect:/admin/workspaces";
-            }
-            
+            // Проверяем наличие коворкинга
+            Coworking coworking = coworkingRepository.findById(coworkingId)
+                    .orElseThrow(() -> new IllegalArgumentException("Коворкинг с ID " + coworkingId + " не найден"));
+
+            // Создаем экземпляр рабочего пространства
             Workspace workspace = new Workspace();
             workspace.setName(name);
-            workspace.setCoworking(coworking.get());
+            workspace.setCoworking(coworking);
             workspace.setSeatsTotal(seatsTotal);
             workspace.setPricePerHour(pricePerHour);
             workspace.setActive(active);
             workspace.setDescription(description);
             workspace.setAmenities(amenities);
-            
+
+            // Сохраняем рабочее пространство
             workspaceRepository.save(workspace);
-            
-            // Create seats for the workspace
+
+            // Создаём места внутри транзакции
             createSeatsForWorkspace(workspace);
-            
+
+            // Добавляем сообщение об успешной операции
             redirectAttributes.addFlashAttribute("success", "Рабочее место успешно создано");
             return "redirect:/admin/workspaces";
         } catch (Exception e) {
+            // Обработка ошибок
             redirectAttributes.addFlashAttribute("error", "Ошибка при создании рабочего места: " + e.getMessage());
             return "redirect:/admin/workspaces";
         }
@@ -262,6 +279,7 @@ public class AdminController {
             return ResponseEntity.badRequest().body("error");
         }
     }
+
 
     @PostMapping("/workspaces/{workspaceId}/generate-slots")
     public String generateSlots(@PathVariable Long workspaceId,
@@ -411,6 +429,17 @@ public class AdminController {
         }
     }
 
+    /**
+* Обрабатывает запрос получить запрос на получение слотов указанного рабочего пространства на определенную дату.
+     *
+     * @param workspaceId the ID of the workspace whose slots are to be retrieved
+     * @param model the model object to add attributes to the view
+     * @param page the pagination page number (default is 0)
+     * @param size the number of slots per page (default is 50)
+     * @param status the status of the slots to filter by (optional)
+     * @param date the target date for which slots are being retrieved; if not provided, defaults to the current day
+     * @return the view name for displaying the workspace slots
+     */
     @GetMapping("/workspaces/{workspaceId}/slots")
     public String workspaceSlots(@PathVariable Long workspaceId, Model model,
                                @RequestParam(defaultValue = "0") int page,

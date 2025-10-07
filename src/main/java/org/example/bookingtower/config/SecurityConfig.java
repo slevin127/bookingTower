@@ -67,7 +67,7 @@ public class SecurityConfig {
             .securityMatcher("/**")
                 .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", 
+                .requestMatchers("/", "/login", "/register","/verify-email", "/resend-verification", "/css/**", "/js/**", "/images/**",
                                "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/client/**").hasRole("USER")
