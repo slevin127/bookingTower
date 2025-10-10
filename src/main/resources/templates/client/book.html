@@ -2,144 +2,268 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::sidebar}, ~{::content})}">
 <head>
     <title>Забронировать место</title>
+    <th:block th:fragment="head-extra">
+        <style>
+            .workspace-card {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                height: 100%;
+            }
+            .workspace-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 0.75rem 1.5rem rgba(102, 126, 234, 0.15);
+            }
+            .slot-table thead th {
+                white-space: nowrap;
+            }
+            .slot-cell {
+                min-height: 72px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                font-weight: 500;
+                transition: transform 0.15s ease;
+            }
+            .slot-cell.slot-open {
+                background-color: #e7f8ef;
+                border: 1px solid #34a85333;
+                color: #0f5132;
+            }
+            .slot-cell.slot-open:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 0.5rem 1rem rgba(15, 81, 50, 0.08);
+            }
+            .slot-cell.slot-booked {
+                background-color: #fde8e8;
+                border: 1px solid #dc354533;
+                color: #842029;
+            }
+            .slot-cell.slot-held {
+                background-color: #fff3cd;
+                border: 1px solid #ffc10733;
+                color: #664d03;
+            }
+            .slot-cell.slot-frozen {
+                background-color: #e2e3e5;
+                border: 1px solid #ced4da;
+                color: #495057;
+            }
+            .slot-cell.slot-missing {
+                background-color: #f8f9fa;
+                border: 1px dashed #ced4da;
+            }
+            .slot-legend .badge {
+                margin-left: 0.25rem;
+            }
+        </style>
+    </th:block>
 </head>
 <body>
-    <!-- Sidebar Menu -->
-    <ul class="nav flex-column" th:fragment="sidebar">
-        <li class="nav-item">
-            <a class="nav-link" th:href="@{/client/dashboard}">
-                <i class="fas fa-tachometer-alt me-2"></i>
-                Мой кабинет
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link active" th:href="@{/client/book}">
-                <i class="fas fa-plus-circle me-2"></i>
-                Забронировать место
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" th:href="@{/client/bookings}">
-                <i class="fas fa-calendar-check me-2"></i>
-                Мои бронирования
-            </a>
-        </li>
-    </ul>
+<ul class="nav flex-column" th:fragment="sidebar">
+    <li class="nav-item">
+        <a class="nav-link" th:href="@{/client/dashboard}">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Мой кабинет
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" th:href="@{/client/book}">
+            <i class="fas fa-plus-circle me-2"></i>
+            Забронировать место
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" th:href="@{/client/bookings}">
+            <i class="fas fa-calendar-check me-2"></i>
+            Мои бронирования
+        </a>
+    </li>
+</ul>
 
-    <!-- Main Content -->
-    <div th:fragment="content">
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-plus-circle me-2"></i>
-                        Забронировать рабочее место
+<div th:fragment="content">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Система бронирования рабочего пространства
+                </div>
+                <div class="card-body">
+                    <div th:if="${error}" class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span th:text="${error}">Произошла ошибка</span>
                     </div>
-                    <div class="card-body">
-                        <!-- Error Messages -->
-                        <div th:if="${param.error}" class="alert alert-danger" role="alert">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span th:if="${param.error[0] == 'failed-to-hold-slot'}">Не удалось забронировать место. Попробуйте еще раз.</span>
-                            <span th:if="${param.error[0] == 'invalid-slot'}">Выбранное место недоступно.</span>
-                            <span th:if="${param.error[0] == 'failed-to-confirm-booking'}">Не удалось подтвердить бронирование.</span>
-                            <span th:unless="${param.error[0] == 'failed-to-hold-slot' or param.error[0] == 'invalid-slot' or param.error[0] == 'failed-to-confirm-booking'}">Произошла ошибка при бронировании.</span>
+                    <div th:if="${info}" class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span th:text="${info}">Информация</span>
+                    </div>
+
+                    <form method="get" th:action="@{/client/book}" class="mb-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-6">
+                                <label for="coworkingId" class="form-label">Выберите коворкинг</label>
+                                <select class="form-select" id="coworkingId" name="coworkingId" required>
+                                    <option value="">Выберите коворкинг...</option>
+                                    <option th:each="coworking : ${coworkings}"
+                                            th:value="${coworking.id}"
+                                            th:text="${coworking.name}"
+                                            th:selected="${coworking.id == selectedCoworkingId}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label for="date" class="form-label">Дата</label>
+                                <input type="date"
+                                       class="form-control"
+                                       id="date"
+                                       name="date"
+                                       th:value="${selectedDate != null ? #temporals.format(selectedDate, 'yyyy-MM-dd') : ''}"
+                                       th:attr="min=${today != null ? #temporals.format(today, 'yyyy-MM-dd') : ''}"
+                                       required>
+                            </div>
+                            <div class="col-lg-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-sync-alt me-2"></i>
+                                    Показать доступность
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div th:if="${selectedCoworking == null}" class="text-center py-5 text-muted">
+                        <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                        <h5>Выберите коворкинг</h5>
+                        <p>После выбора коворкинга мы покажем доступные пространства и их расписание.</p>
+                    </div>
+
+                    <div th:if="${selectedCoworking != null}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="mb-1" th:text="${selectedCoworking.name}">Название коворкинга</h5>
+                                <small class="text-muted" th:text="${selectedCoworking.address}">Адрес</small>
+                            </div>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-clock me-1"></i>
+                                <span th:text="${#temporals.format(selectedCoworking.openFrom, 'HH:mm')} + ' - ' + #temporals.format(selectedCoworking.openTo, 'HH:mm')}">
+                                    09:00 - 21:00
+                                </span>
+                            </span>
                         </div>
 
-                        <!-- Workspace and Date Selection Form -->
-                        <form method="get" th:action="@{/client/book}" class="mb-4">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="workspaceId" class="form-label">Выберите рабочее пространство</label>
-                                    <select class="form-select" id="workspaceId" name="workspaceId" required>
-                                        <option value="">Выберите пространство...</option>
-                                        <option th:each="workspace : ${workspaces}" 
-                                                th:value="${workspace.id}" 
-                                                th:text="${workspace.name}" 
-                                                th:selected="${workspace.id == selectedWorkspaceId}">Workspace Name</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="date" class="form-label">Выберите дату</label>
-                                    <input type="date" class="form-control" id="date" name="date" 
-                                           th:value="${selectedDate}" 
-                                           th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" 
-                                           required>
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-search me-2"></i>Поиск
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <!-- Доступные слоты -->
-                        <div th:if="${availableSlots != null}">
-                            <h5 class="mb-3">
-                                <i class="fas fa-calendar-check me-2"></i>
-                                Доступные места на <span th:text="${#temporals.format(selectedDate, 'dd.MM.yyyy')}">дату</span>
-                                <span th:if="${selectedWorkspace != null}" th:text="' в ' + ${selectedWorkspace.name}"></span>
-                            </h5>
-                            
-                            <div th:if="${#lists.isEmpty(availableSlots)}" class="text-center py-5">
-                                <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
-                                <h6 class="text-muted">На выбранную дату нет доступных мест</h6>
-                                <p class="text-muted">Попробуйте выбрать другую дату или рабочее пространство.</p>
-                            </div>
-
-                            <div th:if="${!#lists.isEmpty(availableSlots)}" class="row">
-                                <div th:each="slot : ${availableSlots}" class="col-md-6 col-lg-4 mb-3">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-chair me-2"></i>
-                                                <span th:text="${slot.seat.name}">Место</span>
-                                            </h6>
-                                            <p class="card-text">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-clock me-1"></i>
-                                                    <span th:text="${#temporals.format(slot.startAt, 'HH:mm')} + ' - ' + ${#temporals.format(slot.endAt, 'HH:mm')}">10:00 - 11:00</span>
-                                                </small><br>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-ruble-sign me-1"></i>
-                                                    <span th:text="${slot.price} + ' руб/час'">100 руб/час</span>
-                                                </small><br>
-                                                <small class="text-muted" th:if="${slot.seat.workspace.description}">
-                                                    <i class="fas fa-info-circle me-1"></i>
-                                                    <span th:text="${slot.seat.workspace.description}">Описание</span>
-                                                </small>
-                                            </p>
-                                            <form method="post" th:action="@{/client/book/hold}">
-                                                <input type="hidden" name="slotId" th:value="${slot.id}">
-                                                <button type="submit" class="btn btn-success w-100">
-                                                    <i class="fas fa-lock me-2"></i>
-                                                    Забронировать
-                                                </button>
-                                            </form>
-                                        </div>
+                        <div class="row">
+                            <div th:each="workspace : ${coworkingWorkspaces}" class="col-md-6 col-lg-4 mb-3">
+                                <div class="card workspace-card"
+                                     th:classappend="${selectedWorkspaceId != null and workspace.id == selectedWorkspaceId} ? ' border-primary shadow-sm' : ''">
+                                    <div class="card-body d-flex flex-column">
+                                        <h6 class="card-title" th:text="${workspace.name}">Название пространства</h6>
+                                        <p class="card-text flex-grow-1">
+                                            <small class="d-block text-muted">
+                                                <i class="fas fa-users me-1"></i>
+                                                <span th:text="${'Мест: ' + workspace.seatsTotal}">Мест: 10</span>
+                                            </small>
+                                            <small class="d-block text-muted">
+                                                <i class="fas fa-ruble-sign me-1"></i>
+                                                <span th:text="${workspace.pricePerHour}">350</span> ₽/час
+                                            </small>
+                                            <small class="d-block text-muted" th:if="${workspace.description}">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                <span th:text="${workspace.description}">Описание</span>
+                                            </small>
+                                        </p>
+                                        <a class="btn"
+                                           th:class="${selectedWorkspaceId != null and workspace.id == selectedWorkspaceId} ? 'btn-primary' : 'btn-outline-primary'"
+                                           th:href="@{|/client/book?coworkingId=${selectedCoworking.id}&workspaceId=${workspace.id}&date=${#temporals.format(selectedDate, 'yyyy-MM-dd')}|}">
+                                            <span th:text="${selectedWorkspaceId != null and workspace.id == selectedWorkspaceId} ? 'Выбрано' : 'Показать расписание'"></span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Instructions when no selection made -->
-                        <div th:if="${availableSlots == null}" class="text-center py-5">
-                            <i class="fas fa-info-circle fa-3x mb-3 text-primary"></i>
-                            <h5>Выберите рабочее пространство и дату</h5>
-                            <p class="text-muted">Чтобы увидеть доступные места для бронирования, выберите рабочее пространство и дату выше.</p>
+                    <div th:if="${selectedWorkspace != null}">
+                        <hr class="my-4"/>
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-3">
+                            <div class="mb-3 mb-lg-0">
+                                <h5 class="mb-1">
+                                    Расписание рабочего пространства
+                                    <span class="text-primary" th:text="${selectedWorkspace.name}">Название</span>
+                                </h5>
+                                <div class="text-muted">
+                                    <i class="fas fa-calendar-day me-1"></i>
+                                    <span th:text="${#temporals.format(selectedDate, 'dd.MM.yyyy')}">01.01.2024</span>
+                                    ·
+                                    <i class="fas fa-ruble-sign me-1"></i>
+                                    <span th:text="${selectedWorkspace.pricePerHour}">350</span> ₽/час
+                                </div>
+                            </div>
+                            <div class="slot-legend">
+                                <span class="badge bg-success"><i class="fas fa-circle me-1"></i>Свободно</span>
+                                <span class="badge bg-danger"><i class="fas fa-circle me-1"></i>Занято</span>
+                                <span class="badge bg-warning text-dark"><i class="fas fa-circle me-1"></i>Удержано</span>
+                                <span class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Недоступно</span>
+                            </div>
+                        </div>
+
+                        <div th:if="${timeSlots != null && !#lists.isEmpty(timeSlots)}" class="table-responsive">
+                            <table class="table table-bordered align-middle slot-table">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Время</th>
+                                    <th th:each="seat : ${workspaceSeats}" th:text="${seat.code}">Место</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="time : ${timeSlots}">
+                                    <th class="fw-normal" th:text="${#temporals.format(time, 'HH:mm')}">09:00</th>
+                                    <td th:each="seat : ${workspaceSeats}"
+                                        th:with="key=${#strings.concat(seat.id, '_', #temporals.format(time, 'HH:mm'))}, slot=${slotMatrix[key]}">
+                                        <div th:if="${slot != null}"
+                                             th:class="${'slot-cell ' + (slot.isAvailable() ? 'slot-open' : (slot.isBooked() ? 'slot-booked' : (slot.isHeld() ? 'slot-held' : (slot.isFrozen() ? 'slot-frozen' : 'slot-missing'))))}">
+                                            <form th:if="${slot.isAvailable()}" method="post" th:action="@{/client/book/hold}">
+                                                <input type="hidden" name="slotId" th:value="${slot.id}">
+                                                <input type="hidden" name="coworkingId" th:value="${selectedCoworking.id}">
+                                                <input type="hidden" name="workspaceId" th:value="${selectedWorkspace.id}">
+                                                <input type="hidden" name="date" th:value="${#temporals.format(selectedDate, 'yyyy-MM-dd')}">
+                                                <button type="submit" class="btn btn-sm btn-success w-100">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    Выбрать
+                                                </button>
+                                            </form>
+                                            <div th:if="${!slot.isAvailable()}" class="text-center w-100">
+                                                <span th:if="${slot.isBooked()}">Занято</span>
+                                                <span th:if="${slot.isHeld()}">Удержано</span>
+                                                <span th:if="${slot.isFrozen()}">Недоступно</span>
+                                                <span th:if="${!slot.isBooked() and !slot.isHeld() and !slot.isFrozen()}">Недоступно</span>
+                                            </div>
+                                        </div>
+                                        <div th:if="${slot == null}" class="slot-cell slot-missing text-muted">-</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div th:if="${timeSlots == null || #lists.isEmpty(timeSlots)}" class="alert alert-info">
+                            Для выбранной даты нет доступных временных слотов. Попробуйте выбрать другую дату.
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <th:block th:fragment="scripts">
-        <script>
-            // Set minimum date to today
-            document.getElementById('date').min = new Date().toISOString().split('T')[0];
-        </script>
-    </th:block>
+<th:block th:fragment="scripts">
+    <script>
+        (function() {
+            const dateInput = document.getElementById('date');
+            if (dateInput && dateInput.min === '') {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.min = today;
+            }
+        })();
+    </script>
+</th:block>
 </body>
 </html>

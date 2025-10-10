@@ -78,6 +78,18 @@ public class AvailabilityService {
         logger.info("Found {} available slots", availableSlots.size());
         return availableSlots;
     }
+
+    @Transactional(readOnly = true)
+    public List<CalendarSlot> getWorkspaceSchedule(Long workspaceId, LocalDate date) {
+        Workspace workspace = workspaceRepository.findByIdAndActiveTrue(workspaceId)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found or inactive"));
+
+        Coworking coworking = workspace.getCoworking();
+        LocalDateTime startDateTime = date.atTime(coworking.getOpenFrom());
+        LocalDateTime endDateTime = date.atTime(coworking.getOpenTo());
+
+        return calendarSlotRepository.findByWorkspaceAndDateRange(workspaceId, startDateTime, endDateTime);
+    }
     
     public Page<CalendarSlot> getAvailableSlots(Long workspaceId, LocalDate date, LocalTime fromTime, LocalTime toTime, Pageable pageable) {
         logger.info("Getting paged available slots for workspace {} on {} from {} to {} (page {}, size {})",

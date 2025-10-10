@@ -157,6 +157,20 @@ public class WorkspaceService {
     }
 
     /**
+     * Возвращает активные рабочие пространства конкретного коворкинга.
+     */
+    public List<Workspace> findActiveByCoworking(Long coworkingId) {
+        return workspaceRepository.findByCoworkingIdAndActiveTrueOrderByName(coworkingId);
+    }
+
+    /**
+     * Возвращает активные рабочие места (посадки) рабочего пространства, отсортированные по коду.
+     */
+    public List<WorkspaceSeat> findActiveSeatsByWorkspace(Long workspaceId) {
+        return workspaceSeatRepository.findByWorkspaceIdAndActiveTrueOrderByCode(workspaceId);
+    }
+
+    /**
      * Получает рабочее пространство по ID.
      *
      * @param workspaceId ID рабочего пространства
