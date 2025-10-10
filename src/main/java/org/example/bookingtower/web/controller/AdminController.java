@@ -3,6 +3,7 @@ package org.example.bookingtower.web.controller;
 import org.example.bookingtower.application.service.AvailabilityService;
 import org.example.bookingtower.application.service.BookingService;
 import org.example.bookingtower.application.service.UserService;
+import org.example.bookingtower.application.service.WorkspaceService;
 import org.example.bookingtower.domain.entity.*;
 import org.example.bookingtower.infrastructure.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ public class AdminController {
     private final CalendarSlotRepository calendarSlotRepository;
     private final AvailabilityService availabilityService;
     private final BookingService bookingService;
+    private final WorkspaceService workspaceService;
 
     /**
      * Constructor for AdminController.
@@ -56,6 +58,7 @@ public class AdminController {
      * @param calendarSlotRepository Repository Для управления данными слота календаря.
      * @param availabilityService Service Обработка логики, связанной с доступностью.
      * @param bookingService Service Обработка логики, связанной с бронированием.
+     * @param workspaceService Service Обработка логики, связанной с рабочими пространствами.
      */
     @Autowired
     public AdminController(UserRepository userRepository, 
@@ -65,7 +68,8 @@ public class AdminController {
                           WorkspaceSeatRepository workspaceSeatRepository,
                           CalendarSlotRepository calendarSlotRepository,
                           AvailabilityService availabilityService,
-                          BookingService bookingService) {
+                          BookingService bookingService,
+                          WorkspaceService workspaceService) {
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
         this.workspaceRepository = workspaceRepository;
@@ -74,6 +78,7 @@ public class AdminController {
         this.calendarSlotRepository = calendarSlotRepository;
         this.availabilityService = availabilityService;
         this.bookingService = bookingService;
+        this.workspaceService = workspaceService;
     }
 
     @GetMapping("/dashboard")
@@ -153,7 +158,7 @@ public class AdminController {
         // Загрузите все коворкинги для выпадения
         List<Coworking> coworkings = coworkingRepository.findAll();
         
-        // Filter workspaces based on parameters
+        // Фильтрация рабочих пространств по параметрам
         List<Workspace> workspaces;
         if (coworkingId != null && active != null) {
             workspaces = active ? 
@@ -175,27 +180,27 @@ public class AdminController {
             workspaces = workspaceRepository.findAll();
         }
         
-        // Apply price filter if specified
+        // Применить ценовой фильтр, если указано
         if (priceFrom != null) {
             workspaces = workspaces.stream()
                 .filter(w -> w.getPricePerHour().compareTo(priceFrom) >= 0)
                 .toList();
         }
         
-        // Load seats for each workspace (for detail modals)
+        // Загрузка мест для каждого рабочего пространства
         for (Workspace workspace : workspaces) {
             List<WorkspaceSeat> seats = workspaceSeatRepository.findByWorkspaceIdAndActiveTrueOrderByCode(workspace.getId());
             workspace.setSeats(seats);
         }
         
-        // Calculate statistics
+        // Рассчитать статистику
         long totalWorkspaces = workspaceRepository.count();
         long activeWorkspaces = workspaceRepository.findByActiveTrue().size();
         long totalSeats = workspaceRepository.findAll().stream()
                 .mapToLong(w -> w.getSeatsTotal() != null ? w.getSeatsTotal() : 0)
                 .sum();
         
-        // Calculate available slots (approximate - sum from all workspaces for next week)
+        // Посчитать доступные слоты (приблизительно — сумма по всем рабочим местам на следующую неделю)
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextWeek = now.plusDays(7);
         long totalSlots = workspaces.stream()
@@ -214,7 +219,6 @@ public class AdminController {
     }
 
     @PostMapping("/workspaces")
-    @Transactional
     public String createWorkspace(@RequestParam String name,
                                   @RequestParam Long coworkingId,
                                   @RequestParam Integer seatsTotal,
@@ -224,31 +228,10 @@ public class AdminController {
                                   @RequestParam(required = false) String amenities,
                                   RedirectAttributes redirectAttributes) {
         try {
-            // Проверяем наличие коворкинга
-            Coworking coworking = coworkingRepository.findById(coworkingId)
-                    .orElseThrow(() -> new IllegalArgumentException("Коворкинг с ID " + coworkingId + " не найден"));
-
-            // Создаем экземпляр рабочего пространства
-            Workspace workspace = new Workspace();
-            workspace.setName(name);
-            workspace.setCoworking(coworking);
-            workspace.setSeatsTotal(seatsTotal);
-            workspace.setPricePerHour(pricePerHour);
-            workspace.setActive(active);
-            workspace.setDescription(description);
-            workspace.setAmenities(amenities);
-
-            // Сохраняем рабочее пространство
-            workspaceRepository.save(workspace);
-
-            // Создаём места внутри транзакции
-            createSeatsForWorkspace(workspace);
-
-            // Добавляем сообщение об успешной операции
+            workspaceService.createWorkspaceWithSeats(name, seatsTotal, pricePerHour, coworkingId, active, description, amenities);
             redirectAttributes.addFlashAttribute("success", "Рабочее место успешно создано");
             return "redirect:/admin/workspaces";
         } catch (Exception e) {
-            // Обработка ошибок
             redirectAttributes.addFlashAttribute("error", "Ошибка при создании рабочего места: " + e.getMessage());
             return "redirect:/admin/workspaces";
         }
@@ -258,22 +241,7 @@ public class AdminController {
     public ResponseEntity<String> toggleWorkspaceStatus(@PathVariable Long workspaceId,
                                                        @RequestParam Boolean active) {
         try {
-            Optional<Workspace> workspaceOpt = workspaceRepository.findById(workspaceId);
-            if (workspaceOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            Workspace workspace = workspaceOpt.get();
-            workspace.setActive(active);
-            workspaceRepository.save(workspace);
-            
-            // Update all seats status as well
-            List<WorkspaceSeat> seats = workspaceSeatRepository.findByWorkspaceIdAndActiveTrue(workspaceId);
-            for (WorkspaceSeat seat : seats) {
-                seat.setActive(active);
-                workspaceSeatRepository.save(seat);
-            }
-            
+            workspaceService.toggleWorkspaceStatus(workspaceId, active);
             return ResponseEntity.ok("success");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("error");
@@ -325,85 +293,12 @@ public class AdminController {
                                  @RequestParam(required = false) String amenities,
                                  RedirectAttributes redirectAttributes) {
         try {
-            Optional<Workspace> workspaceOpt = workspaceRepository.findById(workspaceId);
-            if (workspaceOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Рабочее место не найдено");
-                return "redirect:/admin/workspaces";
-            }
-            
-            Optional<Coworking> coworking = coworkingRepository.findById(coworkingId);
-            if (coworking.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Коворкинг не найден");
-                return "redirect:/admin/workspaces";
-            }
-            
-            Workspace workspace = workspaceOpt.get();
-            Integer oldSeatsTotal = workspace.getSeatsTotal();
-            
-            workspace.setName(name);
-            workspace.setCoworking(coworking.get());
-            workspace.setSeatsTotal(seatsTotal);
-            workspace.setPricePerHour(pricePerHour);
-            workspace.setActive(active);
-            workspace.setDescription(description);
-            workspace.setAmenities(amenities);
-            
-            workspaceRepository.save(workspace);
-            
-            // Обновите места, если Total изменилось
-            if (!oldSeatsTotal.equals(seatsTotal)) {
-                updateSeatsForWorkspace(workspace, oldSeatsTotal, seatsTotal);
-            }
-            
+            workspaceService.updateWorkspace(workspaceId, name, coworkingId, seatsTotal, pricePerHour, active, description, amenities);
             redirectAttributes.addFlashAttribute("success", "Рабочее место успешно обновлено");
             return "redirect:/admin/workspaces";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Ошибка при обновлении рабочего места: " + e.getMessage());
             return "redirect:/admin/workspaces";
-        }
-    }
-
-    private void createSeatsForWorkspace(Workspace workspace) {
-        // Создать места на основе SeatStotal
-        String workspaceName = workspace.getName().replaceAll("[^A-Za-z0-9]", "");
-        if (workspaceName.length() > 5) {
-            workspaceName = workspaceName.substring(0, 5);
-        }
-        
-        for (int i = 1; i <= workspace.getSeatsTotal(); i++) {
-            WorkspaceSeat seat = new WorkspaceSeat();
-            seat.setWorkspace(workspace);
-            seat.setCode(workspaceName.toUpperCase() + "-" + String.format("%02d", i));
-            seat.setDescription("Место " + i);
-            seat.setActive(true);
-            workspaceSeatRepository.save(seat);
-        }
-    }
-    
-    private void updateSeatsForWorkspace(Workspace workspace, Integer oldTotal, Integer newTotal) {
-        if (newTotal > oldTotal) {
-            // Добавить новые места
-            String workspaceName = workspace.getName().replaceAll("[^A-Za-z0-9]", "");
-            if (workspaceName.length() > 5) {
-                workspaceName = workspaceName.substring(0, 5);
-            }
-            
-            for (int i = oldTotal + 1; i <= newTotal; i++) {
-                WorkspaceSeat seat = new WorkspaceSeat();
-                seat.setWorkspace(workspace);
-                seat.setCode(workspaceName.toUpperCase() + "-" + String.format("%02d", i));
-                seat.setDescription("Место " + i);
-                seat.setActive(true);
-                workspaceSeatRepository.save(seat);
-            }
-        } else if (newTotal < oldTotal) {
-            // Удалить лишние сиденья (деактивировать их вместо удаления)
-            List<WorkspaceSeat> allSeats = workspaceSeatRepository.findByWorkspaceIdAndActiveTrueOrderByCode(workspace.getId());
-            for (int i = newTotal; i < allSeats.size() && i < oldTotal; i++) {
-                WorkspaceSeat seat = allSeats.get(i);
-                seat.setActive(false);
-                workspaceSeatRepository.save(seat);
-            }
         }
     }
 
@@ -454,12 +349,12 @@ public class AdminController {
 
         Workspace workspace = workspaceOpt.get();
         
-        // Set default date to today if not provided
+        // Установите дату по умолчанию на сегодня, если она не указана.
         LocalDate targetDate = date != null ? date : LocalDate.now();
         LocalDateTime startOfDay = targetDate.atStartOfDay();
         LocalDateTime endOfDay = targetDate.atTime(23, 59, 59);
         
-        // Get slots for the workspace and date
+        // Получите слоты для рабочей области и даты
         List<CalendarSlot> slots;
         if (status != null && !status.isEmpty()) {
             try {

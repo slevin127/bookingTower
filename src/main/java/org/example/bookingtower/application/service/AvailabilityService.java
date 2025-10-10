@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
  * Сервис AvailabilityService, инкапсулирующий бизнес-логику BookingTower.
  */
 @Service
-@Transactional
+//@Transactional
 public class AvailabilityService {
     
     private static final Logger logger = LoggerFactory.getLogger(AvailabilityService.class);
-    
+
     private final CalendarSlotRepository calendarSlotRepository;
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceSeatRepository workspaceSeatRepository;
@@ -53,9 +53,11 @@ public class AvailabilityService {
         this.coworkingRepository = coworkingRepository;
     }
     
+    @Transactional(readOnly = true)
     public List<CalendarSlot> getAvailableSlots(Long workspaceId, LocalDate date, LocalTime fromTime, LocalTime toTime) {
         logger.info("Getting available slots for workspace {} on {} from {} to {}", workspaceId, date, fromTime, toTime);
-        
+        logger.debug("Получены данные для workspaceId={}, date={}, start={}, end={}", workspaceId, date, fromTime, toTime);
+
         Workspace workspace = workspaceRepository.findByIdAndActiveTrue(workspaceId)
                 .orElseThrow(() -> new IllegalArgumentException("Workspace not found or inactive"));
         
@@ -64,6 +66,8 @@ public class AvailabilityService {
         
         // Проверяем, что интервал соответствует часам работы коворкинга
         Coworking coworking = workspace.getCoworking();
+        logger.debug("Coworking operating hours: {} to {}", coworking.getOpenFrom(), coworking.getOpenTo());
+        logger.debug("Requested time range: {} to {}", startDateTime.toLocalTime(), endDateTime.toLocalTime());
         if (!coworking.isOpenAt(startDateTime.toLocalTime()) || !coworking.isOpenAt(endDateTime.toLocalTime())) {
             throw new IllegalArgumentException("Requested time is outside coworking operating hours");
         }
@@ -76,13 +80,19 @@ public class AvailabilityService {
     }
     
     public Page<CalendarSlot> getAvailableSlots(Long workspaceId, LocalDate date, LocalTime fromTime, LocalTime toTime, Pageable pageable) {
+        logger.info("Getting paged available slots for workspace {} on {} from {} to {} (page {}, size {})",
+                workspaceId, date, fromTime, toTime, pageable.getPageNumber(), pageable.getPageSize());
+
         List<CalendarSlot> allSlots = getAvailableSlots(workspaceId, date, fromTime, toTime);
-        
+
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), allSlots.size());
-        
+
         List<CalendarSlot> pageContent = allSlots.subList(start, end);
-        return new PageImpl<>(pageContent, pageable, allSlots.size());
+        Page<CalendarSlot> result = new PageImpl<>(pageContent, pageable, allSlots.size());
+        logger.info("Returning {} slots for page {} of {} (total slots: {})",
+                result.getNumberOfElements(), result.getNumber() + 1, result.getTotalPages(), result.getTotalElements());
+        return result;
     }
 
     /**

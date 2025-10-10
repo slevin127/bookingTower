@@ -2,6 +2,7 @@ package org.example.bookingtower.web.controller;
 
 import org.example.bookingtower.application.service.AvailabilityService;
 import org.example.bookingtower.application.service.BookingService;
+import org.example.bookingtower.application.service.WorkspaceService;
 import org.example.bookingtower.domain.entity.Coworking;
 import org.example.bookingtower.domain.entity.Workspace;
 import org.example.bookingtower.infrastructure.repository.BookingRepository;
@@ -54,6 +55,9 @@ public class AdminControllerWorkspaceTest {
     @Autowired
     private CalendarSlotRepository calendarSlotRepository;
 
+    @Autowired
+    private WorkspaceService workspaceService;
+
     private AdminController adminController;
     private Coworking testCoworking;
 
@@ -64,7 +68,7 @@ public class AdminControllerWorkspaceTest {
         // Создайте экземпляр Admincontroller
         adminController = new AdminController(userRepository, bookingRepository, workspaceRepository, 
                                             coworkingRepository, workspaceSeatRepository, calendarSlotRepository, 
-                                            availabilityService, bookingService);
+                                            availabilityService, bookingService, workspaceService);
 
         // Создать тест -коворкинг
         testCoworking = new Coworking();

@@ -50,7 +50,7 @@ public class Workspace {
     @Column(nullable = false)
     private Boolean active = true;
     
-    // Transient field for workspace seats (not persisted, used for UI)
+  // Временное поле для рабочих мест (не сохраняется, используется для пользовательского интерфейса)
     @Transient
     private List<WorkspaceSeat> seats;
     

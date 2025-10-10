@@ -2,12 +2,14 @@ package org.example.bookingtower.web.controller;
 
 import org.example.bookingtower.application.service.AvailabilityService;
 import org.example.bookingtower.application.service.BookingService;
+import org.example.bookingtower.application.service.WorkspaceService;
 import org.example.bookingtower.config.CustomUserDetailsService;
 import org.example.bookingtower.domain.entity.Booking;
 import org.example.bookingtower.domain.entity.CalendarSlot;
 import org.example.bookingtower.domain.entity.User;
 import org.example.bookingtower.domain.entity.Workspace;
-import org.example.bookingtower.infrastructure.repository.WorkspaceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +24,9 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Веб-контроллер ClientController для страниц приложения BookingTower.
@@ -33,15 +37,16 @@ public class ClientController {
 
     private final BookingService bookingService;
     private final AvailabilityService availabilityService;
-    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceService workspaceService;
+    private static final Logger logger = LoggerFactory.getLogger(AvailabilityService.class);
 
     @Autowired
     public ClientController(BookingService bookingService,
                             AvailabilityService availabilityService,
-                            WorkspaceRepository workspaceRepository) {
+                            WorkspaceService workspaceService) {
         this.bookingService = bookingService;
         this.availabilityService = availabilityService;
-        this.workspaceRepository = workspaceRepository;
+        this.workspaceService = workspaceService;
     }
 
     @GetMapping("/dashboard")
@@ -88,30 +93,79 @@ public class ClientController {
         return "client/bookings";
     }
 
+    /**
+     * Обрабатывает запрос на бронирование рабочего места.
+     * @param model
+     * @param workspaceId
+     * @param date
+     * @return
+     */
     @GetMapping("/book")
     public String bookWorkspace(Model model,
                                 @RequestParam(required = false) Long workspaceId,
+                                @RequestParam(defaultValue = "09:00") String startTime,
+                                @RequestParam(defaultValue = "21:00") String endTime,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        List<Workspace> workspaces = workspaceRepository.findAll();
+        // Загружаем все рабочие места
+        List<Workspace> workspaces = workspaceService.findAll();
         model.addAttribute("workspaces", workspaces);
 
+        // Проверка наличия workspaceId и даты
         if (workspaceId != null && date != null) {
             try {
-                List<CalendarSlot> availableSlots = availabilityService.getAvailableSlots(workspaceId, date, null, null);
-                model.addAttribute("availableSlots", availableSlots);
+                // Проверяем корректность времени
+                LocalTime start = LocalTime.parse(startTime);
+                LocalTime end = LocalTime.parse(endTime);
+                if (start.isAfter(end)) {
+                    logger.warn("Некорректный временной интервал: startTime={} позже endTime={}", start, end);
+
+                    model.addAttribute("error", "Время начала не может быть позже времени окончания.");
+                    return "client/book";
+                }
+
+                // Получаем доступные слоты
+                List<CalendarSlot> availableSlots = availabilityService.getAvailableSlots(workspaceId, date, start, end);
+                logger.debug("Слоты, возвращенные getAvailableSlots: {}", availableSlots);
+                logger.info("Доступные слоты: {}", availableSlots == null ? "null" : availableSlots.size());
+
+                if (availableSlots == null || availableSlots.isEmpty()) {
+                    model.addAttribute("info", "Нет доступных слотов для выбранного рабочего места и времени.");
+                } else {
+                    model.addAttribute("availableSlots", availableSlots);
+                }
+
+                // Загружаем выбранное рабочее место
+                Workspace selectedWorkspace = workspaceService.findById(workspaceId);
+                if (selectedWorkspace == null) {
+                    model.addAttribute("error", "Рабочее место не найдено.");
+                    return "client/book";
+                }
+                model.addAttribute("selectedWorkspace", selectedWorkspace);
+
+                // Добавляем параметры пользователя
                 model.addAttribute("selectedWorkspaceId", workspaceId);
                 model.addAttribute("selectedDate", date);
 
-                // Получаем информацию о рабочем месте
-                Workspace selectedWorkspace = workspaceRepository.findById(workspaceId).orElse(null);
-                model.addAttribute("selectedWorkspace", selectedWorkspace);
+            } catch (DateTimeParseException e) {
+                model.addAttribute("error", "Неверный формат времени начала или окончания.");
+            } catch (NoSuchElementException e) {
+                model.addAttribute("error", "Рабочее место не найдено.");
             } catch (Exception e) {
-                model.addAttribute("error", "Ошибка при загрузке доступных слотов");
+
+                model.addAttribute("error", "Ошибка при загрузке доступных слотов.");
+            }
+        } else {
+            if (workspaceId == null) {
+                model.addAttribute("info", "Выберите рабочее место.");
+            }
+            if (date == null) {
+                model.addAttribute("info", "Выберите дату.");
             }
         }
 
         return "client/book";
     }
+
 
     @PostMapping("/book/hold")
     public String holdSlot(@RequestParam Long slotId, Authentication authentication) {
