@@ -2,12 +2,15 @@ package org.example.bookingtower.web.controller;
 
 import org.example.bookingtower.application.service.AvailabilityService;
 import org.example.bookingtower.application.service.BookingService;
+import org.example.bookingtower.application.service.CoworkingService;
 import org.example.bookingtower.application.service.WorkspaceService;
 import org.example.bookingtower.config.CustomUserDetailsService;
 import org.example.bookingtower.domain.entity.Booking;
 import org.example.bookingtower.domain.entity.CalendarSlot;
+import org.example.bookingtower.domain.entity.Coworking;
 import org.example.bookingtower.domain.entity.User;
 import org.example.bookingtower.domain.entity.Workspace;
+import org.example.bookingtower.domain.entity.WorkspaceSeat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +27,11 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 /**
  * Веб-контроллер ClientController для страниц приложения BookingTower.
@@ -38,15 +43,18 @@ public class ClientController {
     private final BookingService bookingService;
     private final AvailabilityService availabilityService;
     private final WorkspaceService workspaceService;
+    private final CoworkingService coworkingService;
     private static final Logger logger = LoggerFactory.getLogger(AvailabilityService.class);
 
     @Autowired
     public ClientController(BookingService bookingService,
                             AvailabilityService availabilityService,
-                            WorkspaceService workspaceService) {
+                            WorkspaceService workspaceService,
+                            CoworkingService coworkingService) {
         this.bookingService = bookingService;
         this.availabilityService = availabilityService;
         this.workspaceService = workspaceService;
+        this.coworkingService = coworkingService;
     }
 
     @GetMapping("/dashboard")
@@ -102,65 +110,79 @@ public class ClientController {
      */
     @GetMapping("/book")
     public String bookWorkspace(Model model,
+                                @RequestParam(required = false) Long coworkingId,
                                 @RequestParam(required = false) Long workspaceId,
-                                @RequestParam(defaultValue = "09:00") String startTime,
-                                @RequestParam(defaultValue = "21:00") String endTime,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        // Загружаем все рабочие места
-        List<Workspace> workspaces = workspaceService.findAll();
-        model.addAttribute("workspaces", workspaces);
+        model.addAttribute("pageTitle", "Забронировать место");
 
-        // Проверка наличия workspaceId и даты
-        if (workspaceId != null && date != null) {
-            try {
-                // Проверяем корректность времени
-                LocalTime start = LocalTime.parse(startTime);
-                LocalTime end = LocalTime.parse(endTime);
-                if (start.isAfter(end)) {
-                    logger.warn("Некорректный временной интервал: startTime={} позже endTime={}", start, end);
+        List<Coworking> coworkings = coworkingService.findAllActive();
+        model.addAttribute("coworkings", coworkings);
+        model.addAttribute("selectedCoworkingId", coworkingId);
 
-                    model.addAttribute("error", "Время начала не может быть позже времени окончания.");
-                    return "client/book";
-                }
+        LocalDate selectedDate = date != null ? date : LocalDate.now();
+        model.addAttribute("selectedDate", selectedDate);
+        model.addAttribute("today", LocalDate.now());
 
-                // Получаем доступные слоты
-                List<CalendarSlot> availableSlots = availabilityService.getAvailableSlots(workspaceId, date, start, end);
-                logger.debug("Слоты, возвращенные getAvailableSlots: {}", availableSlots);
-                logger.info("Доступные слоты: {}", availableSlots == null ? "null" : availableSlots.size());
-
-                if (availableSlots == null || availableSlots.isEmpty()) {
-                    model.addAttribute("info", "Нет доступных слотов для выбранного рабочего места и времени.");
-                } else {
-                    model.addAttribute("availableSlots", availableSlots);
-                }
-
-                // Загружаем выбранное рабочее место
-                Workspace selectedWorkspace = workspaceService.findById(workspaceId);
-                if (selectedWorkspace == null) {
-                    model.addAttribute("error", "Рабочее место не найдено.");
-                    return "client/book";
-                }
-                model.addAttribute("selectedWorkspace", selectedWorkspace);
-
-                // Добавляем параметры пользователя
-                model.addAttribute("selectedWorkspaceId", workspaceId);
-                model.addAttribute("selectedDate", date);
-
-            } catch (DateTimeParseException e) {
-                model.addAttribute("error", "Неверный формат времени начала или окончания.");
-            } catch (NoSuchElementException e) {
-                model.addAttribute("error", "Рабочее место не найдено.");
-            } catch (Exception e) {
-
-                model.addAttribute("error", "Ошибка при загрузке доступных слотов.");
+        if (coworkingId == null) {
+            if (coworkings.isEmpty()) {
+                model.addAttribute("info", "Нет доступных коворкингов для бронирования.");
             }
-        } else {
+            return "client/book";
+        }
+
+        try {
+            Coworking selectedCoworking = coworkingService.getActiveById(coworkingId);
+            model.addAttribute("selectedCoworking", selectedCoworking);
+
+            List<Workspace> coworkingWorkspaces = workspaceService.findActiveByCoworking(coworkingId);
+            model.addAttribute("coworkingWorkspaces", coworkingWorkspaces);
+
+            if (coworkingWorkspaces.isEmpty()) {
+                model.addAttribute("info", "В выбранном коворкинге нет активных рабочих пространств.");
+                return "client/book";
+            }
+
             if (workspaceId == null) {
-                model.addAttribute("info", "Выберите рабочее место.");
+                return "client/book";
             }
-            if (date == null) {
-                model.addAttribute("info", "Выберите дату.");
+
+            Workspace selectedWorkspace = workspaceService.findById(workspaceId);
+            if (selectedWorkspace == null || !Boolean.TRUE.equals(selectedWorkspace.getActive()) ||
+                    !selectedWorkspace.getCoworking().getId().equals(coworkingId)) {
+                model.addAttribute("error", "Выбранное рабочее пространство недоступно.");
+                return "client/book";
             }
+
+            model.addAttribute("selectedWorkspace", selectedWorkspace);
+            model.addAttribute("selectedWorkspaceId", workspaceId);
+
+            List<WorkspaceSeat> workspaceSeats = workspaceService.findActiveSeatsByWorkspace(workspaceId);
+            model.addAttribute("workspaceSeats", workspaceSeats);
+
+            if (workspaceSeats.isEmpty()) {
+                model.addAttribute("info", "Для выбранного пространства нет активных рабочих мест.");
+                return "client/book";
+            }
+
+            List<CalendarSlot> scheduleSlots = availabilityService.getWorkspaceSchedule(workspaceId, selectedDate);
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+            List<LocalTime> timeSlots = buildTimeSlots(selectedCoworking.getOpenFrom(), selectedCoworking.getOpenTo());
+            model.addAttribute("timeSlots", timeSlots);
+
+            model.addAttribute("slotMatrix", scheduleSlots.stream()
+                    .collect(Collectors.toMap(
+                            slot -> slot.getSeat().getId() + "_" + timeFormatter.format(slot.getStartAt().toLocalTime()),
+                            slot -> slot,
+                            (slot1, slot2) -> slot1)));
+
+        } catch (NoSuchElementException e) {
+            model.addAttribute("error", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Ошибка при загрузке расписания", e);
+            model.addAttribute("error", "Ошибка при загрузке расписания рабочего пространства.");
         }
 
         return "client/book";
@@ -168,7 +190,11 @@ public class ClientController {
 
 
     @PostMapping("/book/hold")
-    public String holdSlot(@RequestParam Long slotId, Authentication authentication) {
+    public String holdSlot(@RequestParam Long slotId,
+                           @RequestParam(required = false) Long coworkingId,
+                           @RequestParam(required = false) Long workspaceId,
+                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                           Authentication authentication) {
         CustomUserDetailsService.CustomUserPrincipal principal =
                 (CustomUserDetailsService.CustomUserPrincipal) authentication.getPrincipal();
         User user = principal.getUser();
@@ -177,7 +203,17 @@ public class ClientController {
             String holdToken = bookingService.holdSlot(user.getId(), slotId);
             return "redirect:/client/book/confirm?slotId=" + slotId + "&holdToken=" + holdToken;
         } catch (Exception e) {
-            return "redirect:/client/book?error=failed-to-hold-slot";
+            StringBuilder redirect = new StringBuilder("redirect:/client/book?error=failed-to-hold-slot");
+            if (coworkingId != null) {
+                redirect.append("&coworkingId=").append(coworkingId);
+            }
+            if (workspaceId != null) {
+                redirect.append("&workspaceId=").append(workspaceId);
+            }
+            if (date != null) {
+                redirect.append("&date=").append(date);
+            }
+            return redirect.toString();
         }
     }
 
@@ -258,5 +294,20 @@ public class ClientController {
         } catch (Exception e) {
             return "redirect:/client/bookings?error=failed-to-cancel";
         }
+    }
+
+    private List<LocalTime> buildTimeSlots(LocalTime openFrom, LocalTime openTo) {
+        List<LocalTime> slots = new ArrayList<>();
+        if (openFrom == null || openTo == null) {
+            return slots;
+        }
+
+        LocalTime current = openFrom;
+        while (current.isBefore(openTo)) {
+            slots.add(current);
+            current = current.plusHours(1);
+        }
+
+        return slots;
     }
 }
